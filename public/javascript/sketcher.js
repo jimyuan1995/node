@@ -15,9 +15,6 @@ var isMoveCurve;
 var prevMousePt;
 
 
-// for testing
-var testPoints = [];
-
 function setup() {
 	createCanvas(600, 600);
 	noLoop();
@@ -161,10 +158,7 @@ function drawButton() {
 	buttonClear.position(width - 50, padding);
 	buttonClear.mousePressed(function() {
 		drawBackground();
-		testPoints = drawnPoints;
 		drawnPoints = [];
-
-		drawCurve(testPoints, [0]);
 	});
 
 	var buttonTest = createButton("test");
@@ -239,7 +233,6 @@ function mouseDragged() {
 				drawCurve(drawnPoints[i], [0, 155, 255]);
 			}
 		}
-		drawCurve(testPoints, [0]);
 	}
 
 }
@@ -271,7 +264,6 @@ function mouseReleased() {
 
 		drawBackground();
 		drawCurve(drawnPoints, [0, 155, 255]);
-		drawCurve(testPoints, [0]);
 	} else {
 		drawCurve(drawnPoints[movedPtsIdx], [0, 155, 255]);
 		isMoveCurve = false;

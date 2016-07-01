@@ -1,5 +1,7 @@
 var num = 200;
 var limit = 1;
+var width = 600;
+var height = 600;
 
 function funcPts(func, begin, end) {
 	var step = (end - begin) / num;
@@ -19,29 +21,24 @@ function transform(pts, scaleX, scaleY, biasX, biasY) {
 }
 
 
-function getDist(pts1, pts2) {
-	return Math.sqrt(Math.pow(pts1.x - pts2.x, 2) + Math.pow(pts1.y - pts2.y, 2));
-}
-
-
 function findInterceptX(pts) {
 	if (pts.length == 0) return [];
 
 	var intercepts = [];
 
-	if (pts[0].y == 300) intercepts.push(pts[0]);
+	if (pts[0].y == height/2) intercepts.push(pts[0]);
 	for (var i = 1; i < pts.length; i++) {
-		if (pts[i].y == 300) {
+		if (pts[i].y == height/2) {
 			intercepts.push(pts[i]);
 			continue;
 		}
 
-		if ((pts[i-1].y - 300) * (pts[i].y - 300) < 0) {
+		if ((pts[i-1].y - height/2) * (pts[i].y - height/2) < 0) {
 			var dx = pts[i].x - pts[i-1].x;
 			var dy = pts[i].y - pts[i-1].y;
 			var grad = dy/dx;
-			var esti = pts[i-1].x + (1 / grad) * (300 - pts[i-1].y);
-			intercepts.push(new Point(esti, 300));
+			var esti = pts[i-1].x + (1 / grad) * (height/2 - pts[i-1].y);
+			intercepts.push(new Point(esti, height/2));
 		}
 	}
 
@@ -53,19 +50,19 @@ function findInterceptY(pts) {
 
 	var intercepts = [];
 
-	if (pts[0].x == 300) intercepts.push(pts[0]);
+	if (pts[0].x == width/2) intercepts.push(pts[0]);
 	for (var i = 1; i < pts.length; i++) {
-		if (pts[i].x == 300) {
+		if (pts[i].x == width/2) {
 			intercepts.push(pts[i]);
 			continue;
 		}
 
-		if ((pts[i-1].x - 300) * (pts[i].x - 300) < 0) {
+		if ((pts[i-1].x - width/2) * (pts[i].x - width/2) < 0) {
 			var dx = pts[i].x - pts[i-1].x;
 			var dy = pts[i].y - pts[i-1].y;
 			var grad = dy/dx;
-			var esti = pts[i-1].y + grad * (300 - pts[i-1].x);
-			intercepts.push(new Point(300, esti));
+			var esti = pts[i-1].y + grad * (width/2 - pts[i-1].x);
+			intercepts.push(new Point(width/2, esti));
 		}
 	}
 
@@ -86,7 +83,7 @@ function findTurningPts(pts) {
 
 	for (var i = 1; i < grad.length; i++) {
 		if (grad[i-1] != NaN && grad[i] != NaN && grad[i-1] * grad[i] < 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
-			if (abs(grad[i-1] - grad[i]) > 0.01) turningPts.push(pts[i]);
+			if (Math.abs(grad[i-1] - grad[i]) > 0.01) turningPts.push(pts[i]);
 		}
 	}
 

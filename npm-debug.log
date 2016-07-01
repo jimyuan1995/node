@@ -1,0 +1,109 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/local/bin/node',
+1 verbose cli   '/usr/local/bin/npm',
+1 verbose cli   'install',
+1 verbose cli   'urlencoded' ]
+2 info using npm@2.15.5
+3 info using node@v4.4.5
+4 verbose install initial load of /Users/YUAN/Desktop/nodejs/package.json
+5 warn package.json node@1.0.0 No description
+6 warn package.json node@1.0.0 No repository field.
+7 warn package.json node@1.0.0 No README data
+8 verbose installManyTop reading scoped package data from /Users/YUAN/Desktop/nodejs/node_modules/body-parser/package.json
+9 verbose installManyTop reading scoped package data from /Users/YUAN/Desktop/nodejs/node_modules/express/package.json
+10 verbose installManyTop reading scoped package data from /Users/YUAN/Desktop/nodejs/node_modules/json/package.json
+11 verbose installManyTop reading scoped package data from /Users/YUAN/Desktop/nodejs/node_modules/math/package.json
+12 verbose installManyTop reading scoped package data from /Users/YUAN/Desktop/nodejs/node_modules/p5/package.json
+13 info package.json math@0.0.3 No license field.
+14 info package.json p5@0.5.2 No README data
+15 info package.json json@9.0.4 No license field.
+16 verbose readDependencies loading dependencies from /Users/YUAN/Desktop/nodejs/package.json
+17 silly cache add args [ 'urlencoded', null ]
+18 verbose cache add spec urlencoded
+19 silly cache add parsed spec Result {
+19 silly cache add   raw: 'urlencoded',
+19 silly cache add   scope: null,
+19 silly cache add   name: 'urlencoded',
+19 silly cache add   rawSpec: '',
+19 silly cache add   spec: 'latest',
+19 silly cache add   type: 'tag' }
+20 silly addNamed urlencoded@latest
+21 verbose addNamed "latest" is being treated as a dist-tag for urlencoded
+22 info addNameTag [ 'urlencoded', 'latest' ]
+23 silly mapToRegistry name urlencoded
+24 silly mapToRegistry using default registry
+25 silly mapToRegistry registry https://registry.npmjs.org/
+26 silly mapToRegistry data Result {
+26 silly mapToRegistry   raw: 'urlencoded',
+26 silly mapToRegistry   scope: null,
+26 silly mapToRegistry   name: 'urlencoded',
+26 silly mapToRegistry   rawSpec: '',
+26 silly mapToRegistry   spec: 'latest',
+26 silly mapToRegistry   type: 'tag' }
+27 silly mapToRegistry uri https://registry.npmjs.org/urlencoded
+28 verbose addNameTag registry:https://registry.npmjs.org/urlencoded not in flight; fetching
+29 verbose request uri https://registry.npmjs.org/urlencoded
+30 verbose request no auth needed
+31 info attempt registry request try #1 at 9:34:59 PM
+32 verbose request id 66cc846691883803
+33 http request GET https://registry.npmjs.org/urlencoded
+34 http 404 https://registry.npmjs.org/urlencoded
+35 verbose headers { server: 'CouchDB/1.5.0 (Erlang OTP/R16B03)',
+35 verbose headers   etag: '"DR0J5UZ7QYQ8S11U36MC4ABLY"',
+35 verbose headers   'content-type': 'application/json',
+35 verbose headers   'cache-control': 'max-age=0',
+35 verbose headers   'content-length': '468',
+35 verbose headers   'accept-ranges': 'bytes',
+35 verbose headers   date: 'Fri, 01 Jul 2016 20:35:00 GMT',
+35 verbose headers   via: '1.1 varnish',
+35 verbose headers   age: '0',
+35 verbose headers   connection: 'keep-alive',
+35 verbose headers   'x-served-by': 'cache-lhr6335-LHR',
+35 verbose headers   'x-cache': 'MISS',
+35 verbose headers   'x-cache-hits': '0',
+35 verbose headers   'x-timer': 'S1467405299.448429,VS0,VE690',
+35 verbose headers   vary: 'Accept-Encoding' }
+36 silly get cb [ 404,
+36 silly get   { server: 'CouchDB/1.5.0 (Erlang OTP/R16B03)',
+36 silly get     etag: '"DR0J5UZ7QYQ8S11U36MC4ABLY"',
+36 silly get     'content-type': 'application/json',
+36 silly get     'cache-control': 'max-age=0',
+36 silly get     'content-length': '468',
+36 silly get     'accept-ranges': 'bytes',
+36 silly get     date: 'Fri, 01 Jul 2016 20:35:00 GMT',
+36 silly get     via: '1.1 varnish',
+36 silly get     age: '0',
+36 silly get     connection: 'keep-alive',
+36 silly get     'x-served-by': 'cache-lhr6335-LHR',
+36 silly get     'x-cache': 'MISS',
+36 silly get     'x-cache-hits': '0',
+36 silly get     'x-timer': 'S1467405299.448429,VS0,VE690',
+36 silly get     vary: 'Accept-Encoding' } ]
+37 verbose stack Error: Registry returned 404 for GET on https://registry.npmjs.org/urlencoded
+37 verbose stack     at makeError (/usr/local/lib/node_modules/npm/node_modules/npm-registry-client/lib/request.js:264:12)
+37 verbose stack     at CachingRegistryClient.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/npm-registry-client/lib/request.js:242:14)
+37 verbose stack     at Request._callback (/usr/local/lib/node_modules/npm/node_modules/npm-registry-client/lib/request.js:172:14)
+37 verbose stack     at Request.self.callback (/usr/local/lib/node_modules/npm/node_modules/request/request.js:200:22)
+37 verbose stack     at emitTwo (events.js:87:13)
+37 verbose stack     at Request.emit (events.js:172:7)
+37 verbose stack     at Request.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/request/request.js:1067:10)
+37 verbose stack     at emitOne (events.js:82:20)
+37 verbose stack     at Request.emit (events.js:169:7)
+37 verbose stack     at IncomingMessage.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/request/request.js:988:12)
+38 verbose statusCode 404
+39 verbose pkgid urlencoded
+40 verbose cwd /Users/YUAN/Desktop/nodejs
+41 error Darwin 15.4.0
+42 error argv "/usr/local/bin/node" "/usr/local/bin/npm" "install" "urlencoded"
+43 error node v4.4.5
+44 error npm  v2.15.5
+45 error code E404
+46 error 404 Registry returned 404 for GET on https://registry.npmjs.org/urlencoded
+46 error 404
+46 error 404 'urlencoded' is not in the npm registry.
+46 error 404 You should bug the author to publish it (or use the name yourself!)
+46 error 404 It was specified as a dependency of 'node'
+46 error 404
+46 error 404 Note that you can also install from a
+46 error 404 tarball, folder, http url, or git url.
+47 verbose exit [ 1, true ]

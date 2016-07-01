@@ -1,11 +1,6 @@
 var Point = function(a, b) {
-	if (typeof a === 'object') {
-		this.x = a.x;
-		this.y = a.y;
-	} else {
-		this.x = a;
-		this.y = b;
-	}
+	this.x = a;
+	this.y = b;
 }
 
 function getDist(pts1, pts2) {
