@@ -1,6 +1,6 @@
 function send(drawnPoints) {
 	var data = JSON.stringify(drawnPoints);
-	var params = "data=" + data;
+	var params = 'data=' + data + '&width=' + width + '&height=' + height;
 
 	var xhr = new XMLHttpRequest();
 	var url = "/test";

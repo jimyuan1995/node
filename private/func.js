@@ -1,7 +1,7 @@
 var num = 200;
 var limit = 1;
-var width = 600;
-var height = 600;
+var width;
+var height;
 
 function funcPts(func, begin, end) {
 	var step = (end - begin) / num;
@@ -20,6 +20,14 @@ function transform(pts, scaleX, scaleY, biasX, biasY) {
 	return pts;
 }
 
+function Point(x, y) {
+	this.x = x;
+	this.y = y;
+}
+
+function getDist(pts1, pts2) {
+	return Math.sqrt(Math.pow(pts1.x - pts2.x, 2) + Math.pow(pts1.y - pts2.y, 2));
+}
 
 function findInterceptX(pts) {
 	if (pts.length == 0) return [];
@@ -90,7 +98,10 @@ function findTurningPts(pts) {
 	return turningPts;
 }
 
+exports.height = height;
+exports.width = width;
+exports.Point = Point;
+exports.getDist = getDist;
 exports.findInterceptX = findInterceptX;
 exports.findInterceptY = findInterceptY;
 exports.findTurningPts = findTurningPts;
-

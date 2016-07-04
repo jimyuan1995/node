@@ -18,6 +18,10 @@ function transform(pts, scaleX, scaleY, biasX, biasY) {
 	return pts;
 }
 
+function Point(x, y) {
+	this.x = x;
+	this.y = y;
+}
 
 function getDist(pts1, pts2) {
 	return Math.sqrt(Math.pow(pts1.x - pts2.x, 2) + Math.pow(pts1.y - pts2.y, 2));
@@ -29,19 +33,19 @@ function findInterceptX(pts) {
 
 	var intercepts = [];
 
-	if (pts[0].y == 300) intercepts.push(pts[0]);
+	if (pts[0].y == h/2) intercepts.push(pts[0]);
 	for (var i = 1; i < pts.length; i++) {
-		if (pts[i].y == 300) {
+		if (pts[i].y == h/2) {
 			intercepts.push(pts[i]);
 			continue;
 		}
 
-		if ((pts[i-1].y - 300) * (pts[i].y - 300) < 0) {
+		if ((pts[i-1].y - h/2) * (pts[i].y - h/2) < 0) {
 			var dx = pts[i].x - pts[i-1].x;
 			var dy = pts[i].y - pts[i-1].y;
 			var grad = dy/dx;
-			var esti = pts[i-1].x + (1 / grad) * (300 - pts[i-1].y);
-			intercepts.push(new Point(esti, 300));
+			var esti = pts[i-1].x + (1 / grad) * (h/2 - pts[i-1].y);
+			intercepts.push(new Point(esti, h/2));
 		}
 	}
 
@@ -53,19 +57,19 @@ function findInterceptY(pts) {
 
 	var intercepts = [];
 
-	if (pts[0].x == 300) intercepts.push(pts[0]);
+	if (pts[0].x == w/2) intercepts.push(pts[0]);
 	for (var i = 1; i < pts.length; i++) {
-		if (pts[i].x == 300) {
+		if (pts[i].x == w/2) {
 			intercepts.push(pts[i]);
 			continue;
 		}
 
-		if ((pts[i-1].x - 300) * (pts[i].x - 300) < 0) {
+		if ((pts[i-1].x - w/2) * (pts[i].x - w/2) < 0) {
 			var dx = pts[i].x - pts[i-1].x;
 			var dy = pts[i].y - pts[i-1].y;
 			var grad = dy/dx;
-			var esti = pts[i-1].y + grad * (300 - pts[i-1].x);
-			intercepts.push(new Point(300, esti));
+			var esti = pts[i-1].y + grad * (w/2 - pts[i-1].x);
+			intercepts.push(new Point(w/2, esti));
 		}
 	}
 

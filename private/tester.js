@@ -1,17 +1,16 @@
 var func = require('./func');
-var Point = require('./Point');
 var fs = require('fs');
 
+var height;
+var width;
 var error_tolerance_position = 0.02;
 var error_tolerance_shape = 0.02;
 var normDegree = 3;
-var height = 600;
-var width = 600;
 
 function findError(pts1, pts2) {
 	var err = 0;
 	for (var i = 0; i < pts1.length; i++) {
-		err += Math.pow(Point.getDist(pts1[i], pts2[i]), normDegree);
+		err += Math.pow(func.getDist(pts1[i], pts2[i]), normDegree);
 	}
  	return Math.pow(err, 1 / normDegree) / pts1.length;
 }
@@ -28,7 +27,7 @@ function normalise_position(pts) {
 	for (var i = 0; i < pts.length; i++) {
 		var nx = (pts[i].x - width/2) / maxX;
 		var ny = (height/2 - pts[i].y) / maxY;
-		normalisedPts.push(new Point.Point(nx, ny));
+		normalisedPts.push(new func.Point(nx, ny));
 	}
 
 	return normalisedPts;
@@ -54,7 +53,7 @@ function normalise_shape(pts) {
 	for (var i = 0; i < pts.length; i++) {
 		var nx = (pts[i].x - minX) / rangeX;
 		var ny = (pts[i].y - minY) / rangeY;
-		normalisedPts.push(new Point.Point(nx, ny));
+		normalisedPts.push(new func.Point(nx, ny));
 	}
 
 	return normalisedPts;
@@ -114,6 +113,12 @@ function compare(pts1, pts2) {
 function test(req, res) {
 	console.log("Request handler 'test' was called.");
 
+	//extract height and width
+	width = JSON.parse(req.query.width);
+	height = JSON.parse(req.query.height);
+	func.width = width;
+	func.height = height;
+
 	// extract drawnPoints
 	var data = req.query.data;
 	var drawnPoints = JSON.parse(data);
@@ -136,16 +141,20 @@ function test(req, res) {
 			if (!normalise_test(testPoints[i], drawnPoints[i], normalise_position, error_tolerance_position)) {
 				isCorrect = false;
 				console.log('segment: ' + (i+1) + " fail position test");
-				break;
-			} else if (!normalise_test(testPoints[i], drawnPoints[i], normalise_shape, error_tolerance_shape)) {
+			} 
+
+			if (!normalise_test(testPoints[i], drawnPoints[i], normalise_shape, error_tolerance_shape)) {
 				isCorrect = false;
 				console.log('segment: ' + (i+1) + " fail shape test");
-				break;
-			} else if (!testSpecialPts(testPoints[i], drawnPoints[i])) {
+			} 
+
+			if (!testSpecialPts(testPoints[i], drawnPoints[i])) {
 				isCorrect = false;
 				console.log('segment: ' + (i+1) + " fail points test");
-				break;
-			};
+				
+			}
+
+			if (!isCorrect) break;
 		}
 	}
 
