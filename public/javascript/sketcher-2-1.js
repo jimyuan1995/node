@@ -1,7 +1,7 @@
 // provide sketch interface and collect drawn data points from user.
 
 // drawing coefficients
-var gridWidth = 30;
+var gridWidth = 60;
 var strkWeight = 2;
 var padding = 15;
 var h = 600, w = 600;
@@ -9,19 +9,28 @@ var h = 600, w = 600;
 // point collection
 var drawnPtsPartial;
 var drawnPoints = [];
-
-// for moving curve
-var movedPtsIdx;
-var isMoveCurve;
 var prevMousePt;
 
-// for testing
+
+// for moving curve
+var movedCurveIdx;
+var isMoveCurve;
+
+// for moving symbols
+var isMoveSymbol;
+var movedSymIdx;
+
+
 function setup() {
 	createCanvas(w, h);
 	noLoop();
 	cursor(CROSS);
 	drawBackground();
 	drawButton();
+}
+
+function draw() {
+	drawSymbol(symbols, 255);
 }
 
 function drawBackground() {
@@ -160,6 +169,8 @@ function drawButton() {
 	buttonClear.mousePressed(function() {
 		drawBackground();
 		drawnPoints = [];
+		def_symbols();
+		drawSymbol(symbols, 255);
 	});
 
 	var buttonTest = createButton("test");
@@ -181,6 +192,7 @@ function drawCurve(pts, color) {
 	if (pts[0] instanceof Array) {
 		for (var i = 0; i < pts.length; i++)
 			drawCurve(pts[i], color);
+		return;
 	}
 
 	push();
@@ -191,30 +203,85 @@ function drawCurve(pts, color) {
 	}
 	pop();
 
-	drawKnots(findInterceptX(pts));
-	drawKnots(findInterceptY(pts));
-	drawKnots(findTurningPts(pts));
+	drawKnots(findInterceptX(pts), 255);
+	drawKnots(findInterceptY(pts), 255);
+	drawKnots(findTurningPts(pts), 255);
 }
 
 function drawKnots(pts, color) {
-	var radius = 8;
+	if (pts instanceof Array) {
+		for (var i = 0; i < pts.length; i++) 
+			drawKnots(pts[i], color);
+		return;
+	}
 
 	push();
-	fill(255);
+	fill(color);
 	stroke(100);
 	strokeWeight(1);
+	ellipse(pts.x, pts.y, 10, 10);
+	pop();
+}
 
-	for (var i = 0; i < pts.length; i++) {
-		ellipse(pts[i].x, pts[i].y, radius, radius);
+function drawSymbol(symbols, color) {
+	if (symbols.length == 0) return;
+
+	if (symbols instanceof Array) {
+		for (var i = 0; i < symbols.length; i++)
+			drawSymbol(symbols[i], color);
+		return;
 	}
+
+	push();
+	stroke(100);
+	strokeWeight(1);
+	textSize(14);
+	fill(color);
+	ellipse(symbols.x, symbols.y, 10, 10);
+	fill(0);
+	text(symbols.text, symbols.x - 4, symbols.y + 20);
 	pop();
 }
 
 
+
 function mouseDragged() {
-	if (!isMoveCurve) {
-		var current = new Point(mouseX, mouseY);
-	
+	var current = new Point(mouseX, mouseY);
+	if (isMoveCurve) {
+		var dx = current.x - prevMousePt.x;
+		var dy = current.y - prevMousePt.y;
+		drawnPoints[movedCurveIdx] = transform(drawnPoints[movedCurveIdx], 1, 1, dx, dy);
+		prevMousePt = current;
+
+		drawBackground();
+		for (var i = 0; i < drawnPoints.length; i++) {
+			if (i == movedCurveIdx) {
+				drawCurve(drawnPoints[i], [135]);
+			} else {
+				drawCurve(drawnPoints[i], [0, 155, 255]);
+			}
+		}
+		drawSymbol(symbols, 255);
+	} else if (isMoveSymbol) {
+		symbols[movedSymIdx].x = current.x;
+		symbols[movedSymIdx].y = current.y;
+
+		drawBackground();
+		drawCurve(drawnPoints, [0, 155, 255]);
+
+		for (var i = 0; i < drawnPoints.length; i++) {
+			var turnPts = findTurningPts(drawnPoints[i]);
+			for (var j = 0; j < turnPts.length; j++) 
+				if (getDist(current, turnPts[j]) < 10) {
+					drawKnots(turnPts[j], 151);
+					break;
+				}
+		}
+
+		
+		drawSymbol(symbols, 255);
+		drawSymbol(symbols[movedSymIdx], 151);
+	} else {
 		push();
 		stroke(0, 155, 255);
 		strokeWeight(strkWeight);
@@ -225,21 +292,6 @@ function mouseDragged() {
 		pop();
 
 		drawnPtsPartial.push(current);	
-	} else {
-		var current = new Point(mouseX, mouseY);
-		var dx = current.x - prevMousePt.x;
-		var dy = current.y - prevMousePt.y;
-		drawnPoints[movedPtsIdx] = transform(drawnPoints[movedPtsIdx], 1, 1, dx, dy);
-		prevMousePt = current;
-
-		drawBackground();
-		for (var i = 0; i < drawnPoints.length; i++) {
-			if (i == movedPtsIdx) {
-				drawCurve(drawnPoints[i], [135]);
-			} else {
-				drawCurve(drawnPoints[i], [0, 155, 255]);
-			}
-		}
 	}
 
 }
@@ -250,7 +302,7 @@ function mousePressed() {
 		var pts = drawnPoints[i];
 		for (var j = 0; j < pts.length; j++) {
 			if (getDist(pts[j], p) < 10) {
-				movedPtsIdx = i;
+				movedCurveIdx = i;
 				isMoveCurve = true;
 				prevMousePt = p;
 				drawCurve(drawnPoints[i], [135]);
@@ -259,21 +311,49 @@ function mousePressed() {
 		}
 	}
 
+	for (var i = 0; i < symbols.length; i++) {
+		if (getDist(symbols[i], p) < 10) {
+			movedSymIdx = i;
+			isMoveSymbol = true;
+			prevMousePt = p;
+			return false;
+		}
+	}
+
+
 	isMoveCurve = false;
+	isMoveSymbol = false;
 	drawnPtsPartial = [];
 }
 
 function mouseReleased() {
-	if (!isMoveCurve) {
+	if (isMoveCurve) {
+		drawCurve(drawnPoints[movedCurveIdx], [0, 155, 255]);
+		isMoveCurve = false;
+	} else if (isMoveSymbol) {
+		var current = new Point(mouseX, mouseY);
+		for (var i = 0; i < drawnPoints.length; i++) {
+			var turnPts = findTurningPts(drawnPoints[i]);
+			for (var j = 0; j < turnPts.length; j++) 
+				if (getDist(current, turnPts[j]) < 10) {
+					symbols[movedSymIdx].x = turnPts[j].x;
+					symbols[movedSymIdx].y = turnPts[j].y;
+					break;
+				}
+		}
+
+		drawBackground();
+		drawCurve(drawnPoints, [0, 155, 255]);
+		drawSymbol(symbols, 255);
+		isMoveSymbol = false;
+	} else {
 		if (drawnPtsPartial.length == 0) return;
 		var drawBez = genericBezier(sample(drawnPtsPartial));
 		if (drawBez.length > 0) drawnPoints.push(drawBez);
 
 		drawBackground();
 		drawCurve(drawnPoints, [0, 155, 255]);
-	} else {
-		drawCurve(drawnPoints[movedPtsIdx], [0, 155, 255]);
-		isMoveCurve = false;
+		drawSymbol(symbols, 255);
 	}
 }
 
