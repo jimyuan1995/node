@@ -1,7 +1,7 @@
 // provide sketch interface and collect drawn data points from user.
 
 // drawing coefficients
-var gridWidth = 60,
+var gridWidth = 50,
 	strkWeight = 2,
 	padding = 15,
 	h = 600, 
@@ -10,10 +10,10 @@ var gridWidth = 60,
 // point collection
 var drawnPtsPartial;
 var drawnPoints = [];
-var prevMousePt;
 
 
 // for moving curve
+var prevMousePt;
 var movedCurveIdx;
 var isMoveCurve;
 
@@ -261,12 +261,36 @@ function transform(pts, dx, dy) {
 	pts['inter_x'] = findInterceptX(pts);
 	pts['inter_y'] = findInterceptY(pts);
 
-	for (var i = 0; i < pts.bindSym.length; i++) {
-		pts.bindSym[i].x = pts.bindSym[i].default_x;
-		pts.bindSym[i].y = pts.bindSym[i].default_y;
-		pts.bindSym[i].bindCurve = undefined;
+	var sym = pts.bindSym,
+		idx = 0;
+	while (idx < sym.length) {
+		var category = sym[idx].category;
+		if (category == 'turnPts') {
+			sym[idx].x += dx;
+			sym[idx].y += dy;
+			idx++;
+		} else {
+			var found = false;
+			var inter = pts[category];
+			for (var j = 0; j < inter.length; j++) {
+				if (getDist(inter[j], sym[idx]) < 25) {
+					sym[idx].x = inter[j].x;
+					sym[idx].y = inter[j].y;
+					found = true;
+					break;
+				}
+			}
+			if (found) {
+				idx++;
+			} else {
+				sym[idx].x = sym[idx].default_x;
+				sym[idx].y = sym[idx].default_y;
+				sym[idx]['bindCurve'] = undefined;
+				sym[idx]['category'] = undefined;
+				sym.splice(idx, 1);
+			}
+		}
 	}
-	pts['bindSym'] = [];
 
 	return pts;
 }
@@ -385,8 +409,8 @@ function mouseReleased() {
 						symbols[movedSymIdx].x = pts[j].x;
 						symbols[movedSymIdx].y = pts[j].y;
 						drawnPoints[i].bindSym.push(symbols[movedSymIdx]);
-						symbols[movedSymIdx].bindCurve = drawnPoints[i];
-						symbols['category'] = category;
+						symbols[movedSymIdx]['bindCurve'] = drawnPoints[i];
+						symbols[movedSymIdx]['category'] = category;
 						found = true;
 						break;
 					}
