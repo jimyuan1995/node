@@ -2,6 +2,8 @@ function Symbol(text, x, y) {
 	this.text = text;
 	this.x = x;
 	this.y = y;
+	this.default_x = x;
+	this.default_y = y;
 }
 
 var symbols;

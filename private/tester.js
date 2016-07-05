@@ -122,7 +122,8 @@ function test(req, res) {
 	// extract drawnPoints
 	var data = req.query.data;
 	var drawnPoints = JSON.parse(data);
-		
+	console.log(drawnPoints);
+
 	// extract testPoints
 	var data = fs.readFileSync(__dirname + "/" + "testPoints.json");
 	var testPoints = JSON.parse(data);
