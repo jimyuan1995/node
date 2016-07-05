@@ -184,6 +184,12 @@ function drawButton() {
 	buttonTestcase.mousePressed(function() {
 		drawCurve(testPoints, [0]);
 	});
+
+	var buttonUndo = createButton("undo");
+	buttonUndo.position(width - 100, padding + 60);
+	buttonUndo.mousePressed(function() {
+
+	});
 }
 
 function drawCurve(pts, color) {
@@ -244,6 +250,43 @@ function drawSymbol(symbols, color) {
 }
 
 
+function mousePressed() {
+	var current = new Point(mouseX, mouseY);
+
+	for (var i = 0; i < symbols.length; i++) {
+		if (getDist(symbols[i], current) < 10) {
+			movedSymIdx = i;
+			isMoveSymbol = true;
+			if (symbols[movedSymIdx].bindCurve != undefined) {
+				var idx = symbols[movedSymIdx].bindCurve.bindSym.indexOf(symbols[i]);
+				symbols[movedSymIdx].bindCurve.bindSym.splice(idx, 1);
+				symbols[movedSymIdx].bindCurve = undefined;
+			}
+			prevMousePt = current;
+			return false;
+		}
+	}
+
+
+	for (var i = 0; i < drawnPoints.length; i++) {
+		var pts = drawnPoints[i];
+		for (var j = 0; j < pts.length; j++) {
+			if (getDist(pts[j], current) < 10) {
+				movedCurveIdx = i;
+				isMoveCurve = true;
+				prevMousePt = current;
+				drawCurve(drawnPoints[i], [135]);
+				return false;
+			}
+		}
+	}
+
+
+	isMoveCurve = false;
+	isMoveSymbol = false;
+	drawnPtsPartial = [];
+}
+
 
 function mouseDragged() {
 	var current = new Point(mouseX, mouseY);
@@ -251,6 +294,13 @@ function mouseDragged() {
 		var dx = current.x - prevMousePt.x;
 		var dy = current.y - prevMousePt.y;
 		drawnPoints[movedCurveIdx] = transform(drawnPoints[movedCurveIdx], 1, 1, dx, dy);
+
+		if (drawnPoints[movedCurveIdx].bindSym != undefined) 
+			for (var i = 0; i < drawnPoints[movedCurveIdx].bindSym.length; i++) {
+				drawnPoints[movedCurveIdx].bindSym[i].x += dx;
+				drawnPoints[movedCurveIdx].bindSym[i].y += dy;
+			}
+
 		prevMousePt = current;
 
 		drawBackground();
@@ -269,16 +319,18 @@ function mouseDragged() {
 		drawBackground();
 		drawCurve(drawnPoints, [0, 155, 255]);
 
+		var found = false;
 		for (var i = 0; i < drawnPoints.length; i++) {
 			var turnPts = findTurningPts(drawnPoints[i]);
 			for (var j = 0; j < turnPts.length; j++) 
 				if (getDist(current, turnPts[j]) < 10) {
 					drawKnots(turnPts[j], 151);
 					break;
+					found = true;
 				}
+			if (found) break;
 		}
 
-		
 		drawSymbol(symbols, 255);
 		drawSymbol(symbols[movedSymIdx], 151);
 	} else {
@@ -296,50 +348,29 @@ function mouseDragged() {
 
 }
 
-function mousePressed() {
-	var p = new Point(mouseX, mouseY);
-	for (var i = 0; i < drawnPoints.length; i++) {
-		var pts = drawnPoints[i];
-		for (var j = 0; j < pts.length; j++) {
-			if (getDist(pts[j], p) < 10) {
-				movedCurveIdx = i;
-				isMoveCurve = true;
-				prevMousePt = p;
-				drawCurve(drawnPoints[i], [135]);
-				return false;
-			}
-		}
-	}
-
-	for (var i = 0; i < symbols.length; i++) {
-		if (getDist(symbols[i], p) < 10) {
-			movedSymIdx = i;
-			isMoveSymbol = true;
-			prevMousePt = p;
-			return false;
-		}
-	}
-
-
-	isMoveCurve = false;
-	isMoveSymbol = false;
-	drawnPtsPartial = [];
-}
-
 function mouseReleased() {
 	if (isMoveCurve) {
 		drawCurve(drawnPoints[movedCurveIdx], [0, 155, 255]);
 		isMoveCurve = false;
 	} else if (isMoveSymbol) {
 		var current = new Point(mouseX, mouseY);
+		var found = false;
 		for (var i = 0; i < drawnPoints.length; i++) {
 			var turnPts = findTurningPts(drawnPoints[i]);
 			for (var j = 0; j < turnPts.length; j++) 
 				if (getDist(current, turnPts[j]) < 10) {
 					symbols[movedSymIdx].x = turnPts[j].x;
 					symbols[movedSymIdx].y = turnPts[j].y;
+					if (typeof drawnPoints[i].bindSym == 'undefined') {
+						drawnPoints[i].bindSym = [symbols[movedSymIdx]];
+					} else {
+						drawnPoints[i].bindSym.push(symbols[movedSymIdx]);
+					}
+					found = true;
+					symbols[movedSymIdx].bindCurve = drawnPoints[i];
 					break;
 				}
+			if (found) break;
 		}
 
 		drawBackground();
@@ -349,8 +380,9 @@ function mouseReleased() {
 	} else {
 		if (drawnPtsPartial.length == 0) return;
 		var drawBez = genericBezier(sample(drawnPtsPartial));
-		if (drawBez.length > 0) drawnPoints.push(drawBez);
-
+		if (drawBez.length > 0) {
+			drawnPoints.push(drawBez);
+		}
 		drawBackground();
 		drawCurve(drawnPoints, [0, 155, 255]);
 		drawSymbol(symbols, 255);
