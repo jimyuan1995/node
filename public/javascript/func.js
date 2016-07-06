@@ -26,19 +26,19 @@ function findInterceptX(pts) {
 
 	var intercepts = [];
 
-	if (pts[0].y == h/2) intercepts.push(pts[0]);
+	if (pts[0].y == canvasHeight/2) intercepts.push(pts[0]);
 	for (var i = 1; i < pts.length; i++) {
-		if (pts[i].y == h/2) {
+		if (pts[i].y == canvasHeight/2) {
 			intercepts.push(pts[i]);
 			continue;
 		}
 
-		if ((pts[i-1].y - h/2) * (pts[i].y - h/2) < 0) {
+		if ((pts[i-1].y - canvasHeight/2) * (pts[i].y - canvasHeight/2) < 0) {
 			var dx = pts[i].x - pts[i-1].x;
 			var dy = pts[i].y - pts[i-1].y;
 			var grad = dy/dx;
-			var esti = pts[i-1].x + (1 / grad) * (h/2 - pts[i-1].y);
-			intercepts.push(createPoint(esti, h/2));
+			var esti = pts[i-1].x + (1 / grad) * (canvasHeight/2 - pts[i-1].y);
+			intercepts.push(createPoint(esti, canvasHeight/2));
 		}
 	}
 
@@ -50,19 +50,19 @@ function findInterceptY(pts) {
 
 	var intercepts = [];
 
-	if (pts[0].x == w/2) intercepts.push(pts[0]);
+	if (pts[0].x == canvasWidth/2) intercepts.push(pts[0]);
 	for (var i = 1; i < pts.length; i++) {
-		if (pts[i].x == w/2) {
+		if (pts[i].x == canvasWidth/2) {
 			intercepts.push(pts[i]);
 			continue;
 		}
 
-		if ((pts[i-1].x - w/2) * (pts[i].x - w/2) < 0) {
+		if ((pts[i-1].x - canvasWidth/2) * (pts[i].x - canvasWidth/2) < 0) {
 			var dx = pts[i].x - pts[i-1].x;
 			var dy = pts[i].y - pts[i-1].y;
 			var grad = dy/dx;
-			var esti = pts[i-1].y + grad * (w/2 - pts[i-1].x);
-			intercepts.push(createPoint(w/2, esti));
+			var esti = pts[i-1].y + grad * (canvasWidth/2 - pts[i-1].x);
+			intercepts.push(createPoint(canvasWidth/2, esti));
 		}
 	}
 

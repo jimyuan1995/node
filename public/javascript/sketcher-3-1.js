@@ -4,8 +4,8 @@
 var gridWidth = 50,
 	strkWeight = 2,
 	padding = 15,
-	h = 600, 
-	w = 600;
+	canvasHeight = 600, 
+	canvasWidth = 600;
 
 // point collection
 var drawnPtsPartial,
@@ -26,7 +26,7 @@ var logUndo = [],
 
 
 function setup() {
-	createCanvas(w, h);
+	createCanvas(canvasWidth, canvasHeight);
 	noLoop();
 	cursor(CROSS);
 	drawBackground();
@@ -56,14 +56,14 @@ function drawHorizontalAxis() {
 	noFill();
 
 	var leftMargin = padding;
-	var rightMargin = w - padding;
+	var rightMargin = canvasWidth - padding;
 
 	beginShape();
-	vertex(leftMargin, h/2);
-	vertex(rightMargin, h / 2);
-	vertex(rightMargin - 10, h / 2 - 5);
-	vertex(rightMargin, h / 2);
-	vertex(rightMargin - 10, h / 2 + 5);
+	vertex(leftMargin, canvasHeight/2);
+	vertex(rightMargin, canvasHeight / 2);
+	vertex(rightMargin - 10, canvasHeight / 2 - 5);
+	vertex(rightMargin, canvasHeight / 2);
+	vertex(rightMargin - 10, canvasHeight / 2 + 5);
 	endShape();
 	
 	pop();
@@ -78,14 +78,14 @@ function drawVerticalAxis() {
 	noFill();
 
 	var upMargin = padding;
-	var bottomMargin = h - padding;
+	var bottomMargin = canvasHeight - padding;
 
 	beginShape();
-	vertex(w/2, bottomMargin);
-	vertex(w/2, upMargin);
-	vertex(w/2 - 5, upMargin + 10);
-	vertex(w/2, upMargin);
-	vertex(w/2 + 5, upMargin + 10);
+	vertex(canvasWidth/2, bottomMargin);
+	vertex(canvasWidth/2, upMargin);
+	vertex(canvasWidth/2 - 5, upMargin + 10);
+	vertex(canvasWidth/2, upMargin);
+	vertex(canvasWidth/2 + 5, upMargin + 10);
 	endShape();
 	
 	pop();
@@ -100,20 +100,20 @@ function drawGrid() {
 	stroke(215);
 
 	push();
-	translate(0, h / 2);
-	var num = h / (gridWidth * 2);
+	translate(0, canvasHeight / 2);
+	var num = canvasHeight / (gridWidth * 2);
 	for (var i = 0; i < num; i++) {
-		line(0, -i*gridWidth, w, -i*gridWidth);
-		line(0, i*gridWidth, w, i*gridWidth);
+		line(0, -i*gridWidth, canvasWidth, -i*gridWidth);
+		line(0, i*gridWidth, canvasWidth, i*gridWidth);
 	}
 	pop();
 
 	push();
-	translate(w / 2, 0);
-	var num = w / (gridWidth * 2);
+	translate(canvasWidth / 2, 0);
+	var num = canvasWidth / (gridWidth * 2);
 	for (var i = 0; i < num; i++) {
-		line(-i*gridWidth, 0, -i*gridWidth, h);
-		line(i*gridWidth, 0, i*gridWidth, h);
+		line(-i*gridWidth, 0, -i*gridWidth, canvasHeight);
+		line(i*gridWidth, 0, i*gridWidth, canvasHeight);
 	}
 	pop();
 
@@ -128,9 +128,9 @@ function drawLabel() {
 	strokeWeight(1);
 	fill(0);
 
-	text("O", w/2 - 15, h/2 + 15);
-	text("x", w - 12, h/2 + 15);
-	text("y", w/2 + 5, 12);
+	text("O", canvasWidth/2 - 15, canvasHeight/2 + 15);
+	text("x", canvasWidth - 12, canvasHeight/2 + 15);
+	text("y", canvasWidth/2 + 5, 12);
 
 	pop();
 }
@@ -144,24 +144,24 @@ function drawScale() {
 	textSize(12);
 
 	push();
-	translate(0, h / 2);
-	var num = h / (gridWidth * 2);
+	translate(0, canvasHeight / 2);
+	var num = canvasHeight / (gridWidth * 2);
 	for (var i = 1; i < num; i++) {
-		line(w/2 -len, -i*gridWidth, w/2 + len, -i*gridWidth);
-		line(w/2 - len, i*gridWidth, w/2 + len, i*gridWidth);
-		text(i, w/2 + 5, -i * gridWidth + 5);
-		text(-i, w/2 + 5, i * gridWidth + 5);
+		line(canvasWidth/2 -len, -i*gridWidth, canvasWidth/2 + len, -i*gridWidth);
+		line(canvasWidth/2 - len, i*gridWidth, canvasWidth/2 + len, i*gridWidth);
+		text(i, canvasWidth/2 + 5, -i * gridWidth + 5);
+		text(-i, canvasWidth/2 + 5, i * gridWidth + 5);
 	}
 	pop();
 
 	push();
-	translate(w / 2, 0);
-	var num = w / (gridWidth * 2);
+	translate(canvasWidth / 2, 0);
+	var num = canvasWidth / (gridWidth * 2);
 	for (var i = 1; i < num; i++) {
-		line(-i*gridWidth, h/2 - len, -i*gridWidth, h / 2 + len);
-		line(i*gridWidth, h/2 - len, i*gridWidth, h /2 + len);
-		text(-i, -i * gridWidth - 5, h / 2 + 15);
-		text(i, i * gridWidth - 5, h / 2 + 15);
+		line(-i*gridWidth, canvasHeight/2 - len, -i*gridWidth, canvasHeight / 2 + len);
+		line(i*gridWidth, canvasHeight/2 - len, i*gridWidth, canvasHeight /2 + len);
+		text(-i, -i * gridWidth - 5, canvasHeight / 2 + 15);
+		text(i, i * gridWidth - 5, canvasHeight / 2 + 15);
 	}
 	pop();
 
@@ -228,7 +228,7 @@ function drawSymbol(symbol, color) {
 
 function drawButton() {
 	var buttonClear = createButton('clear');
-	buttonClear.position(w - 150, padding);
+	buttonClear.position(canvasWidth - 150, padding);
 	buttonClear.mousePressed(function() {
 		drawBackground();
 		drawnPoints = [];
@@ -239,19 +239,19 @@ function drawButton() {
 	});
 
 	var buttonTest = createButton("test");
-	buttonTest.position(w - 150, padding + 20);
+	buttonTest.position(canvasWidth - 150, padding + 20);
 	buttonTest.mousePressed(function() {
 		send();
 	});
 
 	var buttonTestcase = createButton("show test case");
-	buttonTestcase.position(w - 100, padding + 20);
+	buttonTestcase.position(canvasWidth - 100, padding + 20);
 	buttonTestcase.mousePressed(function() {
 		drawCurve(testPoints, [0]);
 	});
 
 	var buttonUndo = createButton("undo");
-	buttonUndo.position(w - 100, padding);
+	buttonUndo.position(canvasWidth - 100, padding);
 	buttonUndo.mousePressed(function() {
 		if (logUndo.length == 0) return;
 
@@ -259,6 +259,12 @@ function drawButton() {
 			recc = {};
 
 		if (rec['type'] == 'moveSym') {
+			
+			recc.type = 'moveSym';
+			recc.movedSymIdx = rec.movedSymIdx;
+			recc.sym = clone(symbols[rec.movedSymIdx]);
+			logRedo.push(recc);
+
 			var sym = symbols[rec.movedSymIdx];
 			if (sym.bindCurve != undefined) {
 				var idx = sym.bindCurve.bindSym.indexOf(sym);
@@ -273,19 +279,30 @@ function drawButton() {
 
 		} else if (rec['type'] == 'moveCurve') {
 			var pts = drawnPoints[rec.movedCurveIdx];
-			transform(pts, -rec.dx, -rec.dy);
+
+			recc.type = 'moveCurve';
+			recc.movedCurveIdx = rec.movedCurveIdx;
+			recc.dx = -rec.dx;
+			recc.dy = -rec.dy;
+			recc.bindSym = [];
+			for (var i = 0; i < pts.bindSym.length; i++) {
+				var sym = clone(pts.bindSym[i]);
+				sym.idx = symbols.indexOf(pts.bindSym[i]);
+				recc.bindSym.push(sym);
+			}
+			logRedo.push(recc);
 			
+			transform(pts, -rec.dx, -rec.dy);
 			pts.bindSym = [];
 			for (var i = 0; i < rec.bindSym.length; i++) {
 				var sym = rec.bindSym[i];
 				symbols[sym.idx] = clone(sym);
 				pts.bindSym.push(symbols[sym.idx]);
 			}
-
-			recc = rec;
 		} else if (rec['type'] == 'drawCurve') {
 			recc['type'] = 'drawCurve';
 			recc['pts'] = drawnPoints.pop();
+			logRedo.push(recc);
 		}
 
 		drawBackground();
@@ -294,12 +311,64 @@ function drawButton() {
 	});
 
 	var buttonRedo = createButton("redo");
-	buttonRedo.position(w - 50, padding);
+	buttonRedo.position(canvasWidth - 50, padding);
 	buttonRedo.mousePressed(function() {
+		if (logRedo.length == 0) return;
 
+		var rec = {},
+			recc = logRedo.pop();
+
+		if (recc.type == 'moveSym') {
+
+			rec.type = 'moveSym';
+			rec.movedSymIdx = recc.movedSymIdx;
+			rec.sym = clone(symbols[recc.movedSymIdx]);
+			logUndo.push(rec);
+
+			var sym = symbols[recc.movedSymIdx];
+			if (sym.bindCurve != undefined) {
+				var idx = sym.bindCurve.bindSym.indexOf(sym);
+				sym.bindCurve.bindSym.splice(idx, 1);
+			}
+			symbols[recc.movedSymIdx] = clone(recc.sym);
+			var sym = symbols[recc.movedSymIdx];
+			if (sym.bindCurve != undefined) {
+				sym.bindCurve.bindSym.push(sym);
+			}
+
+		} else if (recc.type == 'moveCurve') {
+			var pts = drawnPoints[recc.movedCurveIdx];
+
+			rec.type = 'moveCurve';
+			rec.movedCurveIdx = recc.movedCurveIdx;
+			rec.dx = -recc.dx;
+			rec.dy = -recc.dy;
+			rec.bindSym = [];
+			for (var i = 0; i < pts.bindSym.length; i++) {
+				var sym = clone(pts.bindSym[i]);
+				sym.idx = symbols.indexOf(pts.bindSym[i]);
+				rec.bindSym.push(sym);
+			}
+			logUndo.push(rec);
+			
+			transform(pts, -recc.dx, -recc.dy);
+			pts.bindSym = [];
+			for (var i = 0; i < recc.bindSym.length; i++) {
+				var sym = recc.bindSym[i];
+				symbols[sym.idx] = clone(sym);
+				pts.bindSym.push(symbols[sym.idx]);
+			}
+		} else if (recc.type == 'drawCurve') {
+			rec.type = 'drawCurve';
+			logUndo.push(rec);
+			drawnPoints.push(recc.pts);
+		}
+
+		drawBackground();
+		drawCurve(drawnPoints, [0, 155, 255]);
+		drawSymbol(symbols, 255);
 	});
 }
-
 
 
 function transform(pts, dx, dy) {
@@ -335,10 +404,6 @@ function transform(pts, dx, dy) {
 				sym.y = knot.y;
 				tmp.push(sym);
 			} else {
-				if (sym.bindCurve != undefined) {
-					var idx = sym.bindCurve.bindSym.indexOf(sym);
-					sym.bindCurve.bindSym.splice(idx, 1);
-				}
 				sym.x = sym.default_x;
 				sym.y = sym.default_y;
 				sym.bindCurve = undefined;
@@ -438,6 +503,8 @@ function mouseDragged() {
 
 		drawBackground();
 		drawCurve(drawnPoints, [0, 155, 255]);
+		drawSymbol(symbols, 255);
+		drawSymbol(symbols[movedSymIdx], 151);
 
 		var found = false;
 		function detect(category) {
@@ -456,8 +523,7 @@ function mouseDragged() {
 		if (!found) detect('inter_x');
 		if (!found) detect('inter_y');
 
-		drawSymbol(symbols, 255);
-		drawSymbol(symbols[movedSymIdx], 151);
+		
 	} else {
 		push();
 		stroke(0, 155, 255);
@@ -483,6 +549,7 @@ function mouseReleased() {
 		rec.dx = mouseX - rec['init'].x;
 		rec.dy = mouseY - rec['init'].y;
 		logUndo.push(rec);
+		logRedo = [];
 	} else if (isMoveSymbol) {
 		var current = createPoint(mouseX, mouseY);
 		
@@ -514,6 +581,7 @@ function mouseReleased() {
 		var rec = logUndo.pop();
 		if (!(rec.sym.x == symbols[movedSymIdx].x) || !(rec.sym.y == symbols[movedSymIdx].y)) logUndo.push(rec);
 
+		logRedo = [];
 		drawBackground();
 		drawCurve(drawnPoints, [0, 155, 255]);
 		drawSymbol(symbols, 255);
@@ -531,6 +599,8 @@ function mouseReleased() {
 			drawBez['bindSym'] = [];
 			drawnPoints.push(drawBez);
 		}
+
+		logRedo = [];
 		drawBackground();
 		drawCurve(drawnPoints, [0, 155, 255]);
 		drawSymbol(symbols, 255);

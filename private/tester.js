@@ -27,7 +27,7 @@ function normalise_position(pts) {
 	for (var i = 0; i < pts.length; i++) {
 		var nx = (pts[i].x - width/2) / maxX;
 		var ny = (height/2 - pts[i].y) / maxY;
-		normalisedPts.push(new func.Point(nx, ny));
+		normalisedPts.push(createPoint(nx, ny));
 	}
 
 	return normalisedPts;
@@ -53,7 +53,7 @@ function normalise_shape(pts) {
 	for (var i = 0; i < pts.length; i++) {
 		var nx = (pts[i].x - minX) / rangeX;
 		var ny = (pts[i].y - minY) / rangeY;
-		normalisedPts.push(new func.Point(nx, ny));
+		normalisedPts.push(createPoint(nx, ny));
 	}
 
 	return normalisedPts;
