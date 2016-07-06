@@ -1,20 +1,22 @@
 var num = 200;
 var limit = 1;
 
-function Point(x, y) {
-	this.x = x;
-	this.y = y;
+function createPoint(x, y) {
+	var obj = {};
+	obj.x = x;
+	obj.y = y;
+	return obj;
 }
 
-function getDist(pts1, pts2) {
-	return Math.sqrt(Math.pow(pts1.x - pts2.x, 2) + Math.pow(pts1.y - pts2.y, 2));
+function getDist(pt1, pt2) {
+	return Math.sqrt(Math.pow(pt1.x - pt2.x, 2) + Math.pow(pt1.y - pt2.y, 2));
 }
 
 function funcPts(func, begin, end) {
 	var step = (end - begin) / num;
 	var pts = [];
 	for (var x = begin; x < end; x += step) {
-		pts.push(new Point(x, func(x)));
+		pts.push(createPoint(x, func(x)));
 	}
 	return pts;
 }
@@ -36,7 +38,7 @@ function findInterceptX(pts) {
 			var dy = pts[i].y - pts[i-1].y;
 			var grad = dy/dx;
 			var esti = pts[i-1].x + (1 / grad) * (h/2 - pts[i-1].y);
-			intercepts.push(new Point(esti, h/2));
+			intercepts.push(createPoint(esti, h/2));
 		}
 	}
 
@@ -60,7 +62,7 @@ function findInterceptY(pts) {
 			var dy = pts[i].y - pts[i-1].y;
 			var grad = dy/dx;
 			var esti = pts[i-1].y + grad * (w/2 - pts[i-1].x);
-			intercepts.push(new Point(w/2, esti));
+			intercepts.push(createPoint(w/2, esti));
 		}
 	}
 

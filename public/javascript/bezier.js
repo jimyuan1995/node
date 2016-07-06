@@ -11,7 +11,7 @@ function genericBezier(pts) {
 	}
 
 	var step = 1 / NumControlKnots;
-	var result = [];
+	var bezier = [];
 
 	for (var u = 0; u <= 1; u = u + step) {
 		var sx = 0, sy = 0;
@@ -22,8 +22,8 @@ function genericBezier(pts) {
 			sx += tmp3 * pts[r].x;
 			sy += tmp3 * pts[r].y;
 		}
-		result.push(new Point(sx, sy));
+		bezier.push(createPoint(sx, sy));
 	}
 
-	return result;
+	return bezier;
 }

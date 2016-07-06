@@ -1,4 +1,4 @@
-function send(drawnPoints) {
+function send() {
 	var data = JSON.stringify(drawnPoints);
 	var params = 'data=' + data + '&width=' + width + '&height=' + height;
 

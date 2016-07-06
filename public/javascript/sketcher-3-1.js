@@ -21,7 +21,8 @@ var isMoveSymbol,
 	movedSymIdx;
 
 // for undo and redo
-var logRec = [];
+var logUndo = [],
+	logRedo = [];
 
 
 function setup() {
@@ -204,12 +205,12 @@ function drawKnots(pts, color) {
 	pop();
 }
 
-function drawSymbol(symbols, color) {
-	if (symbols.length == 0) return;
+function drawSymbol(symbol, color) {
+	if (symbol.length == 0) return;
 
-	if (symbols instanceof Array) {
-		for (var i = 0; i < symbols.length; i++)
-			drawSymbol(symbols[i], color);
+	if (symbol instanceof Array) {
+		for (var i = 0; i < symbol.length; i++)
+			drawSymbol(symbol[i], color);
 		return;
 	}
 
@@ -218,9 +219,9 @@ function drawSymbol(symbols, color) {
 	strokeWeight(1);
 	textSize(14);
 	fill(color);
-	ellipse(symbols.x, symbols.y, 10, 10);
+	ellipse(symbol.x, symbol.y, 10, 10);
 	fill(0);
-	text(symbols.text, symbols.x - 4, symbols.y + 20);
+	text(symbol.text, symbol.x - 4, symbol.y + 20);
 	pop();
 }
 
@@ -233,12 +234,14 @@ function drawButton() {
 		drawnPoints = [];
 		def_symbols();
 		drawSymbol(symbols, 255);
+		logUndo = [];
+		logRedo = [];
 	});
 
 	var buttonTest = createButton("test");
 	buttonTest.position(w - 150, padding + 20);
 	buttonTest.mousePressed(function() {
-		send(drawnPoints);
+		send();
 	});
 
 	var buttonTestcase = createButton("show test case");
@@ -250,26 +253,39 @@ function drawButton() {
 	var buttonUndo = createButton("undo");
 	buttonUndo.position(w - 100, padding);
 	buttonUndo.mousePressed(function() {
-		var rec = logRec.pop();
+		if (logUndo.length == 0) return;
+
+		var rec = logUndo.pop(),
+			recc = {};
+
 		if (rec['type'] == 'moveSym') {
-			var sym = symbols[rec['movedSymIdx']];
-			
-			if (sym['bindCurve'] != undefined) {
-				var idx = sym['bindCurve']['bindSym'].indexOf(sym);
-				sym['bindCurve']['bindSym'].splice(idx, 1);
+			var sym = symbols[rec.movedSymIdx];
+			if (sym.bindCurve != undefined) {
+				var idx = sym.bindCurve.bindSym.indexOf(sym);
+				sym.bindCurve.bindSym.splice(idx, 1);
 			}
 
-			sym.x = rec.x;
-			sym.y = rec.y;
-			sym.bindCurve = rec.bindCurve;
-			sym.category = rec.category;
-			if (sym.bindCurve != undefined) 
-				sym['bindCurve']['bindSym'].push(sym);
+			symbols[rec.movedSymIdx] = rec.sym;
+			var sym = symbols[rec.movedSymIdx];
+			if (sym.bindCurve != undefined) {
+				sym.bindCurve.bindSym.push(sym);
+			}
+
 		} else if (rec['type'] == 'moveCurve') {
-			var pts = drawnPoints[rec['movedCurveIdx']];
+			var pts = drawnPoints[rec.movedCurveIdx];
 			transform(pts, -rec.dx, -rec.dy);
+			
+			pts.bindSym = [];
+			for (var i = 0; i < rec.bindSym.length; i++) {
+				var sym = rec.bindSym[i];
+				symbols[sym.idx] = clone(sym);
+				pts.bindSym.push(symbols[sym.idx]);
+			}
+
+			recc = rec;
 		} else if (rec['type'] == 'drawCurve') {
-			drawnPoints.pop();
+			recc['type'] = 'drawCurve';
+			recc['pts'] = drawnPoints.pop();
 		}
 
 		drawBackground();
@@ -295,63 +311,67 @@ function transform(pts, dx, dy) {
 	pts['inter_x'] = findInterceptX(pts);
 	pts['inter_y'] = findInterceptY(pts);
 
-	var sym = pts.bindSym,
-		idx = 0;
-	while (idx < sym.length) {
-		var category = sym[idx].category;
-		if (category == 'turnPts') {
-			sym[idx].x += dx;
-			sym[idx].y += dy;
-			idx++;
+	var tmp = [];
+	for (var i = 0; i < pts.bindSym.length; i++) {
+		var sym = pts.bindSym[i];
+		if (sym.category == 'turnPts') {
+			sym.x += dx;
+			sym.y += dy;
+			tmp.push(sym);
 		} else {
-			var found = false;
-			var inter = pts[category];
+			var found = false,
+				inter = pts[sym.category],
+				min = 50,
+				knot;
 			for (var j = 0; j < inter.length; j++) {
-				if (getDist(inter[j], sym[idx]) < 25) {
-					sym[idx].x = inter[j].x;
-					sym[idx].y = inter[j].y;
+				if (getDist(sym, inter[j]) < min) {
+					min = getDist(sym, inter[j]);
+					knot = inter[j];
 					found = true;
-					break;
 				}
 			}
 			if (found) {
-				idx++;
+				sym.x = knot.x;
+				sym.y = knot.y;
+				tmp.push(sym);
 			} else {
-				sym[idx].x = sym[idx].default_x;
-				sym[idx].y = sym[idx].default_y;
-				sym[idx]['bindCurve'] = undefined;
-				sym[idx]['category'] = undefined;
-				sym.splice(idx, 1);
+				if (sym.bindCurve != undefined) {
+					var idx = sym.bindCurve.bindSym.indexOf(sym);
+					sym.bindCurve.bindSym.splice(idx, 1);
+				}
+				sym.x = sym.default_x;
+				sym.y = sym.default_y;
+				sym.bindCurve = undefined;
+				sym.category = undefined;
 			}
 		}
 	}
 
+	pts.bindSym = tmp;
 	return pts;
 }
 
 
 function mousePressed() {
 	var rec = {};
-	var current = new Point(mouseX, mouseY);
+	var current = createPoint(mouseX, mouseY);
 
 	for (var i = 0; i < symbols.length; i++) {
 		if (getDist(symbols[i], current) < 10) {
-			movedSymIdx = i;
 			isMoveSymbol = true;
+			movedSymIdx = i;
 
+			var sym = symbols[i];
 			rec['type'] = 'moveSym';
-			rec['movedSymIdx'] = movedSymIdx;
-			rec['x'] = symbols[movedSymIdx].x;
-			rec['y'] = symbols[movedSymIdx].y;
-			rec['bindCurve'] = symbols[movedSymIdx].bindCurve;
-			rec['category'] = symbols[movedSymIdx].category;
-			logRec.push(rec);
+			rec['movedSymIdx'] = i;
+			rec['sym'] = clone(sym);
+			logUndo.push(rec);
 
-			if (symbols[movedSymIdx].bindCurve != undefined) {
-				var idx = symbols[movedSymIdx].bindCurve.bindSym.indexOf(symbols[i]);
-				symbols[movedSymIdx].bindCurve.bindSym.splice(idx, 1);
-				symbols[movedSymIdx]['bindCurve'] = undefined;
-				symbols[movedSymIdx]['category'] = undefined;
+			if (sym.bindCurve != undefined) {
+				var idx = sym.bindCurve.bindSym.indexOf(sym);
+				sym.bindCurve.bindSym.splice(idx, 1);
+				sym['bindCurve'] = undefined;
+				sym['category'] = undefined;
 			}
 
 			return false;
@@ -368,22 +388,27 @@ function mousePressed() {
 				prevMousePt = current;
 
 				rec['type'] = 'moveCurve';
-				rec['movedCurveIdx'] = movedCurveIdx;
+				rec['movedCurveIdx'] = i;
 				rec['init'] = current;
-				logRec.push(rec);
+				rec['bindSym'] = [];
+				for (var i = 0; i < pts.bindSym.length; i++) {
+					var sym = clone(pts.bindSym[i]);
+					sym.idx = symbols.indexOf(pts.bindSym[i]);
+					rec.bindSym.push(sym);
+				}
+				logUndo.push(rec);
 
-				drawCurve(drawnPoints[i], [135]);
+				drawCurve(pts, [135]);
 				return false;
 			}
 		}
 	}
 
-
 	isMoveCurve = false;
 	isMoveSymbol = false;
 
 	rec['type'] = 'drawCurve';
-	logRec.push(rec);
+	logUndo.push(rec);
 	drawnPtsPartial = [];
 
 	return false;
@@ -391,7 +416,7 @@ function mousePressed() {
 
 
 function mouseDragged() {
-	var current = new Point(mouseX, mouseY);
+	var current = createPoint(mouseX, mouseY);
 	if (isMoveCurve) {
 		var dx = current.x - prevMousePt.x;
 		var dy = current.y - prevMousePt.y;
@@ -454,12 +479,12 @@ function mouseReleased() {
 		isMoveCurve = false;
 
 		// history
-		var rec = logRec.pop();
+		var rec = logUndo.pop();
 		rec.dx = mouseX - rec['init'].x;
 		rec.dy = mouseY - rec['init'].y;
-		logRec.push(rec);
+		logUndo.push(rec);
 	} else if (isMoveSymbol) {
-		var current = new Point(mouseX, mouseY);
+		var current = createPoint(mouseX, mouseY);
 		
 		var found = false;
 		function attach(category) {
@@ -486,8 +511,8 @@ function mouseReleased() {
 			symbols[movedSymIdx].y = symbols[movedSymIdx].default_y;
 		}
 
-		var rec = logRec.pop();
-		if (!(rec.x == symbols[movedSymIdx].x) || !(rec.y == symbols[movedSymIdx].y)) logRec.push(rec);
+		var rec = logUndo.pop();
+		if (!(rec.sym.x == symbols[movedSymIdx].x) || !(rec.sym.y == symbols[movedSymIdx].y)) logUndo.push(rec);
 
 		drawBackground();
 		drawCurve(drawnPoints, [0, 155, 255]);
@@ -495,7 +520,7 @@ function mouseReleased() {
 		isMoveSymbol = false;
 	} else {
 		if (sample(drawnPtsPartial).length < 3) {
-			logRec.pop();
+			logUndo.pop();
 			return;
 		}
 		var drawBez = genericBezier(sample(drawnPtsPartial));
