@@ -1,5 +1,5 @@
-var num = 200;
-var limit = 1;
+// offer support for front-end and back-end. 
+// auxiliary functions used in both sides.
 
 function createPoint(x, y) {
 	var obj = {};
@@ -13,6 +13,8 @@ function getDist(pt1, pt2) {
 }
 
 function funcPts(func, begin, end) {
+	var num = 200;
+	var limit = 1;
 	var step = (end - begin) / num;
 	var pts = [];
 	for (var x = begin; x < end; x += step) {

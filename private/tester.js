@@ -1,8 +1,10 @@
+// examine the correctness of graph.
+
 var func = require('./func');
 var fs = require('fs');
 
-var height;
-var width;
+var canvasHeight;
+var canvasWidth;
 var error_tolerance_position = 0.02;
 var error_tolerance_shape = 0.02;
 var normDegree = 3;
@@ -19,15 +21,15 @@ function normalise_position(pts) {
 	var maxY = 0, 
 		maxX = 0;
 	for (var i = 1; i < pts.length; i++) {
-		maxY = Math.max(Math.abs(height/2 - pts[i].y), maxY);
-		maxX = Math.max(Math.abs(pts[i].x - width/2), maxX);
+		maxY = Math.max(Math.abs(canvasHeight/2 - pts[i].y), maxY);
+		maxX = Math.max(Math.abs(pts[i].x - canvasWidth/2), maxX);
 	}
 	
 	var normalisedPts = [];
 	for (var i = 0; i < pts.length; i++) {
-		var nx = (pts[i].x - width/2) / maxX;
-		var ny = (height/2 - pts[i].y) / maxY;
-		normalisedPts.push(createPoint(nx, ny));
+		var nx = (pts[i].x - canvasWidth/2) / maxX;
+		var ny = (canvasHeight/2 - pts[i].y) / maxY;
+		normalisedPts.push(func.createPoint(nx, ny));
 	}
 
 	return normalisedPts;
@@ -53,7 +55,7 @@ function normalise_shape(pts) {
 	for (var i = 0; i < pts.length; i++) {
 		var nx = (pts[i].x - minX) / rangeX;
 		var ny = (pts[i].y - minY) / rangeY;
-		normalisedPts.push(createPoint(nx, ny));
+		normalisedPts.push(func.createPoint(nx, ny));
 	}
 
 	return normalisedPts;
@@ -67,11 +69,8 @@ function normalise_test(testPoints, drawnPoints, normalise, error_tolerance) {
 	var err2 = findError(normalise(testPoints), normalise(drawnPoints));
 	
 	var err = Math.min(err1, err2);
-	if (err > error_tolerance) {
-		return false;
-	} else {
-		return true;
-	}
+	if (err > error_tolerance) return false
+		else return true;
 }
 
 function testSpecialPts(testPoints, drawnPoints) {
@@ -80,7 +79,7 @@ function testSpecialPts(testPoints, drawnPoints) {
 		if (pts1.length == 0) return true;
 
 		for (var i = 0; i < pts1.length; i++)
-			if ((pts1[i].x - width/2) * (pts2[i].x - width/2) < 0 || (pts1[i].y - height/2) * (pts2[i].y - height/2) < 0) 
+			if ((pts1[i].x - canvasWidth/2) * (pts2[i].x - canvasWidth/2) < 0 || (pts1[i].y - canvasHeight/2) * (pts2[i].y - canvasHeight/2) < 0) 
 				return false;
 
 		return true;
@@ -95,7 +94,7 @@ function testSpecialPts(testPoints, drawnPoints) {
 function compare(pts1, pts2) {
 	function findMinX(pts) {
 		if (pts.length == 0) return 0;
-		var min = width;
+		var min = canvasWidth;
 		for (var i = 0; i < pts.length; i++) 
 			min = Math.min(min, pts[i].x);
 		return min;
@@ -113,17 +112,19 @@ function compare(pts1, pts2) {
 function test(req, res) {
 	console.log("Request handler 'test' was called.");
 
-	//extract height and width
-	width = JSON.parse(req.query.width);
-	height = JSON.parse(req.query.height);
-	func.width = width;
-	func.height = height;
+	// extract canvasHeight and canvasWidth from http request
+	canvasWidth = JSON.parse(req.query.canvasWidth);
+	canvasHeight = JSON.parse(req.query.canvasHeight);
+	
+	// share with func module
+	func.canvasWidth = canvasWidth;
+	func.canvasHeight = canvasHeight;
 
-	// extract drawnPoints
+	// extract drawnPoints from http request
 	var data = req.query.data;
 	var drawnPoints = JSON.parse(data);
 
-	// extract testPoints
+	// extract testPoints from file on server
 	var data = fs.readFileSync(__dirname + "/" + "testPoints.json");
 	var testPoints = JSON.parse(data);
 
@@ -138,16 +139,19 @@ function test(req, res) {
 		drawnPoints = drawnPoints.sort(compare);
 
 		for (var i = 0; i < testPoints.length; i++) {
+			// test position
 			if (!normalise_test(testPoints[i], drawnPoints[i], normalise_position, error_tolerance_position)) {
 				isCorrect = false;
 				console.log('segment: ' + (i+1) + " fail position test");
 			} 
 
+			// test shape
 			if (!normalise_test(testPoints[i], drawnPoints[i], normalise_shape, error_tolerance_shape)) {
 				isCorrect = false;
 				console.log('segment: ' + (i+1) + " fail shape test");
 			} 
 
+			// test special points
 			if (!testSpecialPts(testPoints[i], drawnPoints[i])) {
 				isCorrect = false;
 				console.log('segment: ' + (i+1) + " fail points test");

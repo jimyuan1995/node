@@ -1,3 +1,5 @@
+// special file for symbols.
+
 function createSymbol(text, x, y, default_x, default_y, category, bindCurve) {
 	var obj = {};
 	obj.text = text;

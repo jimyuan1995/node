@@ -1,7 +1,8 @@
-var num = 200;
-var limit = 1;
-var width;
-var height;
+// offer support for front-end and back-end. 
+// group auxiliary functions used in both sides.
+
+var canvasWidth;
+var canvasHeight;
 
 function createPoint(x, y) {
 	var obj = {};
@@ -10,11 +11,14 @@ function createPoint(x, y) {
 	return obj;
 }
 
+// get distance between two points, pt1 and pt2.
 function getDist(pt1, pt2) {
 	return Math.sqrt(Math.pow(pt1.x - pt2.x, 2) + Math.pow(pt1.y - pt2.y, 2));
 }
 
 function funcPts(func, begin, end) {
+	var num = 200;
+	var limit = 1;
 	var step = (end - begin) / num;
 	var pts = [];
 	for (var x = begin; x < end; x += step) {
@@ -28,19 +32,21 @@ function findInterceptX(pts) {
 
 	var intercepts = [];
 
-	if (pts[0].y == height/2) intercepts.push(pts[0]);
+	if (pts[0].y == canvasHeight/2) intercepts.push(pts[0]);
 	for (var i = 1; i < pts.length; i++) {
-		if (pts[i].y == height/2) {
+		// if pts[i] is the intercpet
+		if (pts[i].y == canvasHeight/2) {
 			intercepts.push(pts[i]);
 			continue;
 		}
 
-		if ((pts[i-1].y - height/2) * (pts[i].y - height/2) < 0) {
+		if ((pts[i-1].y - canvasHeight/2) * (pts[i].y - canvasHeight/2) < 0) {
+			// use linear spline to estimate x of intercept
 			var dx = pts[i].x - pts[i-1].x;
 			var dy = pts[i].y - pts[i-1].y;
 			var grad = dy/dx;
-			var esti = pts[i-1].x + (1 / grad) * (height/2 - pts[i-1].y);
-			intercepts.push(new Point(esti, height/2));
+			var esti = pts[i-1].x + (1 / grad) * (canvasHeight/2 - pts[i-1].y);
+			intercepts.push(new Point(esti, canvasHeight/2));
 		}
 	}
 
@@ -52,19 +58,21 @@ function findInterceptY(pts) {
 
 	var intercepts = [];
 
-	if (pts[0].x == width/2) intercepts.push(pts[0]);
+	if (pts[0].x == canvasWidth/2) intercepts.push(pts[0]);
 	for (var i = 1; i < pts.length; i++) {
-		if (pts[i].x == width/2) {
+		// if pts[i] is the intercpet
+		if (pts[i].x == canvasWidth/2) {
 			intercepts.push(pts[i]);
 			continue;
 		}
 
-		if ((pts[i-1].x - width/2) * (pts[i].x - width/2) < 0) {
+		if ((pts[i-1].x - canvasWidth/2) * (pts[i].x - canvasWidth/2) < 0) {
+			// use linear spline to estimate y of intercept.
 			var dx = pts[i].x - pts[i-1].x;
 			var dy = pts[i].y - pts[i-1].y;
 			var grad = dy/dx;
-			var esti = pts[i-1].y + grad * (width/2 - pts[i-1].x);
-			intercepts.push(new Point(width/2, esti));
+			var esti = pts[i-1].y + grad * (canvasWidth/2 - pts[i-1].x);
+			intercepts.push(new Point(canvasWidth/2, esti));
 		}
 	}
 
@@ -84,16 +92,18 @@ function findTurningPts(pts) {
 	}
 
 	for (var i = 1; i < grad.length; i++) {
-		if (grad[i-1] != NaN && grad[i] != NaN && grad[i-1] * grad[i] < 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
-			if (Math.abs(grad[i-1] - grad[i]) > 0.01) turningPts.push(pts[i]);
-		}
+		// turning point should be: 1.grad on both sides exist; 2.grad on two sides have different signs; 3.the difference in grad on both sides
+		// should be sufficiently large.
+		if (grad[i-1] != NaN && grad[i] != NaN && grad[i-1] * grad[i] < 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) 
+			if (Math.abs(grad[i-1] - grad[i]) > 0.01) 
+				turningPts.push(pts[i]);
 	}
 
 	return turningPts;
 }
 
-exports.height = height;
-exports.width = width;
+exports.canvasHeight = canvasHeight;
+exports.canvasWidth = canvasWidth;
 exports.createPoint = createPoint;
 exports.getDist = getDist;
 exports.findInterceptX = findInterceptX;

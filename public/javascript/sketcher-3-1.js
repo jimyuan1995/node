@@ -1,11 +1,14 @@
-// provide sketch interface and collect drawn data points from user.
+// functionality:
+// 1. provide sketch background, react to mousePressed, mouseDragged and mouseReleased
+// 2. collect drawn data points from user
 
-// drawing coefficients
-var gridWidth = 50,
+// canvas coefficients
+var canvasHeight = 600, 
+	canvasWidth = 600,
+	gridWidth = 50,
 	strkWeight = 2,
-	padding = 15,
-	canvasHeight = 600, 
-	canvasWidth = 600;
+	padding = 15;
+	
 
 // point collection
 var drawnPtsPartial,
@@ -25,6 +28,7 @@ var logUndo = [],
 	logRedo = [];
 
 
+// run in the beginning
 function setup() {
 	createCanvas(canvasWidth, canvasHeight);
 	noLoop();
@@ -33,6 +37,8 @@ function setup() {
 	drawButton();
 }
 
+
+// run only once
 function draw() {
 	drawSymbol(symbols, 255);
 }
@@ -168,9 +174,11 @@ function drawScale() {
 	pop();
 }
 
+// given a set of points, draw the corresponding curve.
 function drawCurve(pts, color) {
 	if (pts.length == 0) return;
 
+	// if input is multiple curves
 	if (pts[0] instanceof Array) {
 		for (var i = 0; i < pts.length; i++)
 			drawCurve(pts[i], color);
@@ -185,12 +193,16 @@ function drawCurve(pts, color) {
 	}
 	pop();
 
+	// draw x intercepts, y intercepts and turning points
 	drawKnots(pts['inter_x'], 255);
 	drawKnots(pts['inter_y'], 255);
 	drawKnots(pts['turnPts'], 255);
 }
 
+
+// given a set of points, draw the corresponding points (knots).
 function drawKnots(pts, color) {
+	// if input has multiple points
 	if (pts instanceof Array) {
 		for (var i = 0; i < pts.length; i++) 
 			drawKnots(pts[i], color);
@@ -205,9 +217,12 @@ function drawKnots(pts, color) {
 	pop();
 }
 
+// draw symbols, e.g. "A", "B".
 function drawSymbol(symbol, color) {
 	if (symbol.length == 0) return;
 
+
+	// if input has multiple symbols.
 	if (symbol instanceof Array) {
 		for (var i = 0; i < symbol.length; i++)
 			drawSymbol(symbol[i], color);
@@ -250,6 +265,8 @@ function drawButton() {
 		drawCurve(testPoints, [0]);
 	});
 
+	// redo and undo is essentially the reverse of each other.
+
 	var buttonUndo = createButton("undo");
 	buttonUndo.position(canvasWidth - 100, padding);
 	buttonUndo.mousePressed(function() {
@@ -259,13 +276,15 @@ function drawButton() {
 			recc = {};
 
 		if (rec['type'] == 'moveSym') {
-			
+			// produce record for redo
 			recc.type = 'moveSym';
 			recc.movedSymIdx = rec.movedSymIdx;
 			recc.sym = clone(symbols[rec.movedSymIdx]);
 			logRedo.push(recc);
 
+			
 			var sym = symbols[rec.movedSymIdx];
+			// remove sym from previously binded curve
 			if (sym.bindCurve != undefined) {
 				var idx = sym.bindCurve.bindSym.indexOf(sym);
 				sym.bindCurve.bindSym.splice(idx, 1);
@@ -273,6 +292,7 @@ function drawButton() {
 
 			symbols[rec.movedSymIdx] = rec.sym;
 			var sym = symbols[rec.movedSymIdx];
+			// bind sym to the current curve
 			if (sym.bindCurve != undefined) {
 				sym.bindCurve.bindSym.push(sym);
 			}
@@ -280,6 +300,7 @@ function drawButton() {
 		} else if (rec['type'] == 'moveCurve') {
 			var pts = drawnPoints[rec.movedCurveIdx];
 
+			// produce record for redo
 			recc.type = 'moveCurve';
 			recc.movedCurveIdx = rec.movedCurveIdx;
 			recc.dx = -rec.dx;
@@ -292,7 +313,9 @@ function drawButton() {
 			}
 			logRedo.push(recc);
 			
-			transform(pts, -rec.dx, -rec.dy);
+			// reversly translate the curve
+			translate(pts, -rec.dx, -rec.dy);
+			// restore binded symbols
 			pts.bindSym = [];
 			for (var i = 0; i < rec.bindSym.length; i++) {
 				var sym = rec.bindSym[i];
@@ -300,6 +323,7 @@ function drawButton() {
 				pts.bindSym.push(symbols[sym.idx]);
 			}
 		} else if (rec['type'] == 'drawCurve') {
+			// produce record for redo
 			recc['type'] = 'drawCurve';
 			recc['pts'] = drawnPoints.pop();
 			logRedo.push(recc);
@@ -320,18 +344,21 @@ function drawButton() {
 
 		if (recc.type == 'moveSym') {
 
+			// produce record for undo
 			rec.type = 'moveSym';
 			rec.movedSymIdx = recc.movedSymIdx;
 			rec.sym = clone(symbols[recc.movedSymIdx]);
 			logUndo.push(rec);
 
 			var sym = symbols[recc.movedSymIdx];
+			// remove sym from previously binded curve
 			if (sym.bindCurve != undefined) {
 				var idx = sym.bindCurve.bindSym.indexOf(sym);
 				sym.bindCurve.bindSym.splice(idx, 1);
 			}
 			symbols[recc.movedSymIdx] = clone(recc.sym);
 			var sym = symbols[recc.movedSymIdx];
+			// bind sym to the current curve
 			if (sym.bindCurve != undefined) {
 				sym.bindCurve.bindSym.push(sym);
 			}
@@ -339,6 +366,7 @@ function drawButton() {
 		} else if (recc.type == 'moveCurve') {
 			var pts = drawnPoints[recc.movedCurveIdx];
 
+			// produce record for undo
 			rec.type = 'moveCurve';
 			rec.movedCurveIdx = recc.movedCurveIdx;
 			rec.dx = -recc.dx;
@@ -351,7 +379,9 @@ function drawButton() {
 			}
 			logUndo.push(rec);
 			
-			transform(pts, -recc.dx, -recc.dy);
+			// reversely translate the curve
+			translate(pts, -recc.dx, -recc.dy);
+			// restore binded symbols
 			pts.bindSym = [];
 			for (var i = 0; i < recc.bindSym.length; i++) {
 				var sym = recc.bindSym[i];
@@ -359,6 +389,7 @@ function drawButton() {
 				pts.bindSym.push(symbols[sym.idx]);
 			}
 		} else if (recc.type == 'drawCurve') {
+			// produce record for undo
 			rec.type = 'drawCurve';
 			logUndo.push(rec);
 			drawnPoints.push(recc.pts);
@@ -370,8 +401,8 @@ function drawButton() {
 	});
 }
 
-
-function transform(pts, dx, dy) {
+// given a curve, translate the curve
+function translate(pts, dx, dy) {
 	for (var i = 0; i < pts.length; i++) {
 		pts[i].x += dx;
 		pts[i].y += dy;
@@ -380,6 +411,8 @@ function transform(pts, dx, dy) {
 	pts['inter_x'] = findInterceptX(pts);
 	pts['inter_y'] = findInterceptY(pts);
 
+
+	// tmp is the new "bindSym" array. It is done in this way to avoid removing elements from the array when traversing it. 
 	var tmp = [];
 	for (var i = 0; i < pts.bindSym.length; i++) {
 		var sym = pts.bindSym[i];
@@ -388,6 +421,8 @@ function transform(pts, dx, dy) {
 			sym.y += dy;
 			tmp.push(sym);
 		} else {
+			// look for the new intercept which derives from the intercept binded by sym, if found, then bind sym to new intercept,
+			// otherwise, put sym back to default position (note in this case sym is not pushed into tmp).
 			var found = false,
 				inter = pts[sym.category],
 				min = 50,
@@ -416,7 +451,6 @@ function transform(pts, dx, dy) {
 	return pts;
 }
 
-
 function mousePressed() {
 	var rec = {};
 	var current = createPoint(mouseX, mouseY);
@@ -426,12 +460,14 @@ function mousePressed() {
 			isMoveSymbol = true;
 			movedSymIdx = i;
 
+			// produce record for undo
 			var sym = symbols[i];
 			rec['type'] = 'moveSym';
 			rec['movedSymIdx'] = i;
 			rec['sym'] = clone(sym);
 			logUndo.push(rec);
 
+			// remove symbol from previously binded curve
 			if (sym.bindCurve != undefined) {
 				var idx = sym.bindCurve.bindSym.indexOf(sym);
 				sym.bindCurve.bindSym.splice(idx, 1);
@@ -452,10 +488,12 @@ function mousePressed() {
 				isMoveCurve = true;
 				prevMousePt = current;
 
+				// produce record for undo
 				rec['type'] = 'moveCurve';
 				rec['movedCurveIdx'] = i;
 				rec['init'] = current;
 				rec['bindSym'] = [];
+				// store binded symbols
 				for (var i = 0; i < pts.bindSym.length; i++) {
 					var sym = clone(pts.bindSym[i]);
 					sym.idx = symbols.indexOf(pts.bindSym[i]);
@@ -472,20 +510,20 @@ function mousePressed() {
 	isMoveCurve = false;
 	isMoveSymbol = false;
 
+	// produce record for undo
 	rec['type'] = 'drawCurve';
 	logUndo.push(rec);
-	drawnPtsPartial = [];
 
+	drawnPtsPartial = [];
 	return false;
 }
-
 
 function mouseDragged() {
 	var current = createPoint(mouseX, mouseY);
 	if (isMoveCurve) {
 		var dx = current.x - prevMousePt.x;
 		var dy = current.y - prevMousePt.y;
-		drawnPoints[movedCurveIdx] = transform(drawnPoints[movedCurveIdx], dx, dy);
+		drawnPoints[movedCurveIdx] = translate(drawnPoints[movedCurveIdx], dx, dy);
 		prevMousePt = current;
 
 		drawBackground();
@@ -544,7 +582,7 @@ function mouseReleased() {
 		drawCurve(drawnPoints[movedCurveIdx], [0, 155, 255]);
 		isMoveCurve = false;
 
-		// history
+		// produce record for undo
 		var rec = logUndo.pop();
 		rec.dx = mouseX - rec['init'].x;
 		rec.dy = mouseY - rec['init'].y;
@@ -587,18 +625,18 @@ function mouseReleased() {
 		drawSymbol(symbols, 255);
 		isMoveSymbol = false;
 	} else {
+		// neglect if curve drawn is too short
 		if (sample(drawnPtsPartial).length < 3) {
 			logUndo.pop();
 			return;
 		}
+
 		var drawBez = genericBezier(sample(drawnPtsPartial));
-		if (drawBez.length > 0) {
-			drawBez['inter_x'] = findInterceptX(drawBez);
-			drawBez['inter_y'] = findInterceptY(drawBez);
-			drawBez['turnPts'] = findTurningPts(drawBez);
-			drawBez['bindSym'] = [];
-			drawnPoints.push(drawBez);
-		}
+		drawBez['inter_x'] = findInterceptX(drawBez);
+		drawBez['inter_y'] = findInterceptY(drawBez);
+		drawBez['turnPts'] = findTurningPts(drawBez);
+		drawBez['bindSym'] = [];
+		drawnPoints.push(drawBez);
 
 		logRedo = [];
 		drawBackground();
