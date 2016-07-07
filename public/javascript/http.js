@@ -1,4 +1,5 @@
 // send data to server for testing correctness of the graph
+// data is sent in terms of JSON string using GET method via XMLHttpRequest
 
 function send() {
 	var data = JSON.stringify(drawnPoints);

@@ -85,7 +85,7 @@ function findTurningPts(pts) {
 
 	for (var i = 1; i < grad.length; i++) {
 		if (grad[i-1] != NaN && grad[i] != NaN && grad[i-1] * grad[i] < 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
-			if (abs(grad[i-1] - grad[i]) > 0.01) turningPts.push(pts[i]);
+			if (Math.abs(grad[i-1] - grad[i]) > 0.01) turningPts.push(pts[i]);
 		}
 	}
 

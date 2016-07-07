@@ -30,7 +30,7 @@ var logUndo = [],
 
 // run in the beginning
 function setup() {
-	createCanvas(canvasWidth, canvasHeight);
+	createCanvas(canvasWidth, canvasHeight).position(50,50);
 	noLoop();
 	cursor(CROSS);
 	drawBackground();
@@ -262,7 +262,7 @@ function drawButton() {
 	var buttonTestcase = createButton("show test case");
 	buttonTestcase.position(canvasWidth - 100, padding + 20);
 	buttonTestcase.mousePressed(function() {
-		drawCurve(testPoints, [0]);
+		drawCurve(testPoints, 0);
 	});
 
 	// redo and undo is essentially the reverse of each other.
@@ -314,7 +314,7 @@ function drawButton() {
 			logRedo.push(recc);
 			
 			// reversly translate the curve
-			translate(pts, -rec.dx, -rec.dy);
+			transCurve(pts, -rec.dx, -rec.dy);
 			// restore binded symbols
 			pts.bindSym = [];
 			for (var i = 0; i < rec.bindSym.length; i++) {
@@ -380,14 +380,27 @@ function drawButton() {
 			logUndo.push(rec);
 			
 			// reversely translate the curve
-			translate(pts, -recc.dx, -recc.dy);
+			transCurve(pts, -recc.dx, -recc.dy);
+			
 			// restore binded symbols
-			pts.bindSym = [];
+			// tmp is the new bindSym
+			var tmp = [];
 			for (var i = 0; i < recc.bindSym.length; i++) {
 				var sym = recc.bindSym[i];
 				symbols[sym.idx] = clone(sym);
-				pts.bindSym.push(symbols[sym.idx]);
+				tmp.push(symbols[sym.idx]);
 			}
+			// handle cases: symbols drop off when curve moves
+			for (var i = 0; i < pts.bindSym.length; i++) {
+				if (!tmp.includes(pts.bindSym[i])) {
+					pts.bindSym[i].x = pts.bindSym[i].default_x;
+					pts.bindSym[i].y = pts.bindSym[i].default_y;
+					pts.bindSym[i].category = undefined;
+					pts.bindSym[i].bindCurve = undefined;
+				}
+			}
+			pts.bindSym = tmp;
+
 		} else if (recc.type == 'drawCurve') {
 			// produce record for undo
 			rec.type = 'drawCurve';
@@ -402,7 +415,7 @@ function drawButton() {
 }
 
 // given a curve, translate the curve
-function translate(pts, dx, dy) {
+function transCurve(pts, dx, dy) {
 	for (var i = 0; i < pts.length; i++) {
 		pts[i].x += dx;
 		pts[i].y += dy;
@@ -454,6 +467,7 @@ function translate(pts, dx, dy) {
 function mousePressed() {
 	var rec = {};
 	var current = createPoint(mouseX, mouseY);
+	console.log(current);
 
 	for (var i = 0; i < symbols.length; i++) {
 		if (getDist(symbols[i], current) < 10) {
@@ -523,7 +537,7 @@ function mouseDragged() {
 	if (isMoveCurve) {
 		var dx = current.x - prevMousePt.x;
 		var dy = current.y - prevMousePt.y;
-		drawnPoints[movedCurveIdx] = translate(drawnPoints[movedCurveIdx], dx, dy);
+		drawnPoints[movedCurveIdx] = transCurve(drawnPoints[movedCurveIdx], dx, dy);
 		prevMousePt = current;
 
 		drawBackground();
@@ -626,7 +640,7 @@ function mouseReleased() {
 		isMoveSymbol = false;
 	} else {
 		// neglect if curve drawn is too short
-		if (sample(drawnPtsPartial).length < 3) {
+		if (sample(drawnPtsPartial).length < 2) {
 			logUndo.pop();
 			return;
 		}

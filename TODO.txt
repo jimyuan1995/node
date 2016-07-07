@@ -1,3 +1,20 @@
-1. intercepts
-2. return to original position
-3. undo and redo
+tester bug: cannot show knots
+
+wondering knot of redo
+
+
+1. draw
+2. put labels on 
+3. move 
+4. get rid of x-inter
+5. move
+
+
+asymtote
+straight line drawing
+
+$('p.button').click(function() {
+		
+	})
+
+	<p class="button"></p>
