@@ -1,20 +1,4 @@
-tester bug: cannot show knots
+knot merging
+show test case button fixing
+assymtote
 
-wondering knot of redo
-
-
-1. draw
-2. put labels on 
-3. move 
-4. get rid of x-inter
-5. move
-
-
-asymtote
-straight line drawing
-
-$('p.button').click(function() {
-		
-	})
-
-	<p class="button"></p>

@@ -85,12 +85,57 @@ function findTurningPts(pts) {
 
 	for (var i = 1; i < grad.length; i++) {
 		if (grad[i-1] != NaN && grad[i] != NaN && grad[i-1] * grad[i] < 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
-			if (Math.abs(grad[i-1] - grad[i]) > 0.01) turningPts.push(pts[i]);
+			if (Math.abs(grad[i-1] - grad[i]) > 0.01) 
+				turningPts.push(pts[i]);
 		}
 	}
 
 	return turningPts;
 }
+
+function findMaxima(pts) {
+	if (pts.length == 0) return [];
+
+	var maxima = [];
+
+	var grad = [];
+	for (var i = 0; i < pts.length - 1; i++) {
+		var dx = pts[i+1].x - pts[i].x;
+		var dy = pts[i+1].y - pts[i].y;
+		grad.push(dy/dx);
+	}
+
+	for (var i = 1; i < grad.length; i++) {
+		if (grad[i-1] != NaN && grad[i] != NaN && grad[i-1] < 0 && grad[i] > 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
+			if (Math.abs(grad[i-1] - grad[i]) > 0.01) 
+				maxima.push(pts[i]);
+		}
+	}
+
+	return maxima;
+}
+
+function findMinima(pts) {
+	if (pts.length == 0) return [];
+
+	var minima = [];
+
+	var grad = [];
+	for (var i = 0; i < pts.length - 1; i++) {
+		var dx = pts[i+1].x - pts[i].x;
+		var dy = pts[i+1].y - pts[i].y;
+		grad.push(dy/dx);
+	}
+
+	for (var i = 1; i < grad.length; i++) {
+		if (grad[i-1] != NaN && grad[i] != NaN && grad[i-1] > 0 && grad[i] < 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) 
+			if (Math.abs(grad[i-1] - grad[i]) > 0.01) 
+				minima.push(pts[i]);
+	}
+
+	return minima;
+}
+
 
 
 

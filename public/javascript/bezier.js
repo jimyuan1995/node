@@ -24,6 +24,7 @@ function genericBezier(pts) {
 		}
 		bezier.push(createPoint(sx, sy));
 	}
+	bezier.push(pts[pts.length - 1]);
 
 	return bezier;
 }

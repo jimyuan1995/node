@@ -1,6 +1,6 @@
 // special file for symbols.
 
-function createSymbol(text, x, y, default_x, default_y, category, bindCurve) {
+function createSymbol(text, x, y, default_x, default_y, category, bindCurve, bindCurveIdx) {
 	var obj = {};
 	obj.text = text;
 	obj.x = x;
@@ -21,19 +21,18 @@ function clone(sym) {
 	obj.y = sym.y;
 	obj.default_x = sym.default_x;
 	obj.default_y = sym.default_y;
-	obj.bindCurve = sym.bindCurve;
 	obj.category = sym.category;
+	obj.bindCurve = sym.bindCurve;
 	return obj;
 }
-
 
 var symbols,
 	padding = 15;
 
-function def_symbols() {
+function restore_symbols() {
 	symbols = [];
 	symbols.push(createSymbol('A', padding, padding ));
 	symbols.push(createSymbol('B', padding + 30, padding));
 }
 
-def_symbols();
+restore_symbols();

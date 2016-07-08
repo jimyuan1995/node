@@ -5,8 +5,8 @@ var fs = require('fs');
 
 var canvasHeight;
 var canvasWidth;
-var error_tolerance_position = 0.02;
-var error_tolerance_shape = 0.02;
+var error_tolerance_position = 0.015;
+var error_tolerance_shape = 0.01;
 var normDegree = 3;
 
 function findError(pts1, pts2) {
@@ -69,6 +69,7 @@ function normalise_test(testPoints, drawnPoints, normalise, error_tolerance) {
 	var err2 = findError(normalise(testPoints), normalise(drawnPoints));
 	
 	var err = Math.min(err1, err2);
+	console.log(err);
 	if (err > error_tolerance) return false
 		else return true;
 }
@@ -87,8 +88,20 @@ function testSpecialPts(testPoints, drawnPoints) {
 
 	//if (!inner(func.findInterceptX(testPoints), func.findInterceptX(drawnPoints))) return false;
 	//if (!inner(func.findInterceptY(testPoints), func.findInterceptY(drawnPoints))) return false;
-	if (!inner(func.findTurningPts(testPoints), func.findTurningPts(drawnPoints))) return false;
+	// if (!inner(func.findTurningPts(testPoints), func.findTurningPts(drawnPoints))) return false;
 	return true;
+}
+
+function testSymbols(testSyms, drawnSyms) {
+	var isSame = true;
+	for (var i = 0; i < testSyms.length; i++) {
+		if (testSyms[i].text != drawnSyms[i].text) isSame = false
+		else if (testSyms[i].bindCurveIdx != drawnSyms[i].bindCurveIdx) isSame = false
+		else if (testSyms[i].category != drawnSyms[i].category) isSame = false;
+		if (!isSame) break;
+	}
+	if (isSame) return true
+		else return false;
 }
 
 function compare(pts1, pts2) {
@@ -110,6 +123,7 @@ function compare(pts1, pts2) {
 
 
 function test(req, res) {
+	console.log('------------')
 	console.log("Request handler 'test' was called.");
 
 	// extract canvasHeight and canvasWidth from http request
@@ -120,52 +134,74 @@ function test(req, res) {
 	func.canvasWidth = canvasWidth;
 	func.canvasHeight = canvasHeight;
 
-	// extract drawnPoints from http request
-	var data = req.query.data;
-	var drawnPoints = JSON.parse(data);
+	// extract data
+	var data = JSON.parse(req.query.data);
+	var drawnSyms = data['symbols'];
+	var drawnPoints = data['points'];
 
-	// extract testPoints from file on server
+	// extract testPoints and symbols from file on server
 	var data = fs.readFileSync(__dirname + "/" + "testPoints.json");
-	var testPoints = JSON.parse(data);
+	data = JSON.parse(data);
+	testSyms = data['symbols'];
+	testPoints = data['points'];
 
-	
 	// test
 	var isCorrect = true;
+
 	if (testPoints.length != drawnPoints.length) {
 		isCorrect = false;
-		console.log('fail due to different number of segments');
+		console.log("fail 'number of segments' test");
 	} else {
+		console.log("pass 'number of segments' test");
+	}
+
+	if (isCorrect) {
+		if (!testSymbols(testSyms, drawnSyms)) {
+			isCorrect = false;
+			console.log("fail 'symbol' test");
+		} else {
+			console.log("pass 'symbol' test");
+		}
+	}
+		
+	if (isCorrect) {
 		testPoints = testPoints.sort(compare);
 		drawnPoints = drawnPoints.sort(compare);
 
 		for (var i = 0; i < testPoints.length; i++) {
+
 			// test position
 			if (!normalise_test(testPoints[i], drawnPoints[i], normalise_position, error_tolerance_position)) {
 				isCorrect = false;
-				console.log('segment: ' + (i+1) + " fail position test");
-			} 
+				console.log('segment ' + (i+1) + " fail 'position' test");
+			} else {
+				console.log('segment ' + (i+1) + " pass 'position' test");
+			}
 
 			// test shape
 			if (!normalise_test(testPoints[i], drawnPoints[i], normalise_shape, error_tolerance_shape)) {
 				isCorrect = false;
-				console.log('segment: ' + (i+1) + " fail shape test");
-			} 
+				console.log('segment ' + (i+1) + " fail 'shape' test");
+			} else {
+				console.log('segment ' + (i+1) + " pass 'shape' test");
+			}
 
 			// test special points
 			if (!testSpecialPts(testPoints[i], drawnPoints[i])) {
 				isCorrect = false;
-				console.log('segment: ' + (i+1) + " fail points test");
-				
+				console.log('segment ' + (i+1) + " fail 'points' test");
+			} else {
+				console.log('segment ' + (i+1) + " pass 'points' test");
 			}
 
-			if (!isCorrect) break;
+			// if (!isCorrect) break;
 		}
-	}
-
+	}	
+			
 	res.set('Content-Type', 'text/html');
 	if (isCorrect) {
-		console.log('success');
-		res.send('success');
+		console.log('pass');
+		res.send('pass');
 	} else {
 		console.log('fail');
 		res.send('fail');
