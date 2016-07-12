@@ -2,18 +2,6 @@
 var upper = 20;
 
 function drawButton() {
-	var buttonClear = createButton('clear');
-	buttonClear.position(600, upper);
-	buttonClear.mousePressed(function() {
-		drawnPoints = [];
-		assymtotes = [];
-		logUndo = [];
-		logRedo = [];
-		restore_symbols();
-
-		drawBackground();
-		drawSymbols(symbols, 255);
-	});
 
 	var buttonTest = createButton("test");
 	buttonTest.position(50, upper);
@@ -25,26 +13,23 @@ function drawButton() {
 	buttonTestcase.position(100, upper);
 	buttonTestcase.mousePressed(showTestCase);
 
+
 	var buttonPrint = createButton("print");
 	buttonPrint.position(200, upper);
 	buttonPrint.mousePressed(function() {
-		sbls = [];
-		for (var i = 0; i < symbols.length; i++) {
-			var obj = {};
-			obj.text = symbols[i].text;
-			obj.x = symbols[i].x;
-			obj.y = symbols[i].y;
-			if (symbols[i].bindCurve != undefined) {
-				obj.category = symbols[i].category;
-				obj.bindCurveIdx = drawnPoints.indexOf(symbols[i].bindCurve);
-			}			
-			sbls.push(obj);
-		}
-		var data = {};
-		data['symbols'] = sbls;
-		data['points'] = drawnPoints;
+		var data = getData();
 		console.log(JSON.stringify(data));
 	});
+
+	var buttonShape = createButton("normalise");
+	buttonShape.position(250, upper);
+	buttonShape.mousePressed(function() {
+		drawNormalisedShape(drawnPtss[0]);
+		drawNormalisedPosition(drawnPtss[0]);
+	});
+
+
+
 
 
 	// redo and undo is essentially the reverse of each other.
@@ -80,7 +65,7 @@ function drawButton() {
 			}
 
 		} else if (rec['type'] == 'moveCurve') {
-			var pts = drawnPoints[rec.movedCurveIdx];
+			var pts = drawnPtss[rec.movedCurveIdx];
 
 			// produce record for redo
 			recc.type = 'moveCurve';
@@ -107,13 +92,13 @@ function drawButton() {
 		} else if (rec['type'] == 'drawCurve') {
 			// produce record for redo
 			recc['type'] = 'drawCurve';
-			recc['pts'] = drawnPoints.pop();
+			recc['pts'] = drawnPtss.pop();
 			logRedo.push(recc);
 		}
 
 		drawBackground();
-		drawCurves(drawnPoints, [0, 155, 255]);
-		drawSymbols(symbols, [255]);
+		drawCurves(drawnPtss, [0, 155, 255]);
+		drawSymbols(symbols, 0);
 
 	});
 
@@ -147,7 +132,7 @@ function drawButton() {
 			}
 
 		} else if (recc.type == 'moveCurve') {
-			var pts = drawnPoints[recc.movedCurveIdx];
+			var pts = drawnPtss[recc.movedCurveIdx];
 
 			// produce record for undo
 			rec.type = 'moveCurve';
@@ -188,13 +173,26 @@ function drawButton() {
 			// produce record for undo
 			rec.type = 'drawCurve';
 			logUndo.push(rec);
-			drawnPoints.push(recc.pts);
+			drawnPtss.push(recc.pts);
 		}
 
 		drawBackground();
-		drawCurves(drawnPoints, [0, 155, 255]);
-		drawSymbols(symbols, 255);
+		drawCurves(drawnPtss, [0, 155, 255]);
+		drawSymbols(symbols, 0);
 
+	});
+
+	var buttonClear = createButton('clear');
+	buttonClear.position(600, upper);
+	buttonClear.mousePressed(function() {
+		drawnPtss = [];
+		assymtotes = [];
+		logUndo = [];
+		logRedo = [];
+		restore_symbols();
+
+		drawBackground();
+		drawSymbols(symbols, 0);
 	});
 }
 

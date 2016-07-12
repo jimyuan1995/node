@@ -1,4 +1,5 @@
-knot merging
-show test case button fixing
-assymtote
+Further task:
+1. curve editing
+2. movable axis
+
 

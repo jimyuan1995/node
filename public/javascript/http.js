@@ -1,7 +1,27 @@
 // send data to server for testing correctness of the graph
 // data is sent in terms of JSON string using GET method via XMLHttpRequest
 
-function send() {
+function getData() {
+	var ptss = [];
+	for (var i = 0; i < drawnPtss.length; i++) 
+		ptss.push(drawnPtss[i]);
+
+	function compare(pts1, pts2) {
+		function findMinX(pts) {
+			if (pts.length == 0) return 0;
+			var min = canvasWidth;
+			for (var i = 0; i < pts.length; i++) 
+				min = Math.min(min, pts[i].x);
+			return min;
+		}
+		var min1 = findMinX(pts1);
+		var min2 = findMinX(pts2);
+		if (min1 < min2) return -1
+		else if (min1 == min2) return 0
+		else return 1;
+	}
+	ptss.sort(compare);
+
 	sbls = [];
 	for (var i = 0; i < symbols.length; i++) {
 		var obj = {};
@@ -10,15 +30,21 @@ function send() {
 		obj.y = symbols[i].y;
 		if (symbols[i].bindCurve != undefined) {
 			obj.category = symbols[i].category;
-			obj.bindCurveIdx = drawnPoints.indexOf(symbols[i].bindCurve);
+			obj.bindCurveIdx = ptss.indexOf(symbols[i].bindCurve);
 		}
 		sbls.push(obj);
 	}
+
 	var data = {};
 	data['symbols'] = sbls;
-	data['points'] = drawnPoints;
-	var params = 'data=' + JSON.stringify(data) + '&canvasWidth=' + canvasWidth + '&canvasHeight=' + canvasHeight;
+	data['ptss'] = ptss;
 
+	return data;
+}
+
+function send() {
+	var data = getData();
+	var params = 'data=' + JSON.stringify(data) + '&canvasWidth=' + canvasWidth + '&canvasHeight=' + canvasHeight;
 	var xhr = new XMLHttpRequest();
 	var url = "/test";
 	xhr.open("GET", url + '?' + params, true);
@@ -29,3 +55,4 @@ function send() {
 	}
 	xhr.send();
 }
+

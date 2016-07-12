@@ -5,17 +5,9 @@ var fs = require('fs');
 
 var canvasHeight;
 var canvasWidth;
-var error_tolerance_position = 0.015;
+var error_tolerance_position = 0.02;
 var error_tolerance_shape = 0.01;
 var normDegree = 3;
-
-function findError(pts1, pts2) {
-	var err = 0;
-	for (var i = 0; i < pts1.length; i++) {
-		err += Math.pow(func.getDist(pts1[i], pts2[i]), normDegree);
-	}
- 	return Math.pow(err, 1 / normDegree) / pts1.length;
-}
 
 function normalise_position(pts) {
 	var maxY = 0, 
@@ -28,7 +20,7 @@ function normalise_position(pts) {
 	var normalisedPts = [];
 	for (var i = 0; i < pts.length; i++) {
 		var nx = (pts[i].x - canvasWidth/2) / maxX;
-		var ny = (canvasHeight/2 - pts[i].y) / maxY;
+		var ny = (pts[i].y - canvasHeight/2) / maxY;
 		normalisedPts.push(func.createPoint(nx, ny));
 	}
 
@@ -62,21 +54,34 @@ function normalise_shape(pts) {
 }
 
 
-function normalise_test(testPoints, drawnPoints, normalise, error_tolerance) {
-	var err1 = findError(normalise(testPoints), normalise(drawnPoints));
+
+function normalise_test(testPts, drawnPts, normalise, error_tolerance) {
 	
-	testPoints.reverse();
-	var err2 = findError(normalise(testPoints), normalise(drawnPoints));
-	
+	function findError(pts1, pts2) {
+		var err = 0;
+		for (var i = 0; i < pts1.length; i++) {
+			err += Math.pow(func.getDist(pts1[i], pts2[i]), normDegree);
+		}
+	 	return Math.pow(err, 1 / normDegree) / pts1.length;
+	}
+
+	// if ((testPts[1].x - testPts[0].x) * (drawnPts[1].x - drawnPts[0].x) < 0)
+	// 	drawnPts.reverse();
+
+	var err1 = findError(normalise(testPts), normalise(drawnPts));
+	testPtss.reverse();
+	var err2 = findError(normalise(testPts), normalise(drawnPts));
 	var err = Math.min(err1, err2);
+	
 	console.log(err);
 	if (err > error_tolerance) return false
 		else return true;
 }
 
-function testSpecialPts(testPoints, drawnPoints) {
-	function inner(pts1, pts2) {
+function testSpecialPts(testPts, drawnPts) {
+	function inSameQuadrant(pts1, pts2) {
 		if (pts1.length != pts2.length) return false;
+		
 		if (pts1.length == 0) return true;
 
 		for (var i = 0; i < pts1.length; i++)
@@ -86,9 +91,11 @@ function testSpecialPts(testPoints, drawnPoints) {
 		return true;
 	}
 
-	//if (!inner(func.findInterceptX(testPoints), func.findInterceptX(drawnPoints))) return false;
-	//if (!inner(func.findInterceptY(testPoints), func.findInterceptY(drawnPoints))) return false;
-	// if (!inner(func.findTurningPts(testPoints), func.findTurningPts(drawnPoints))) return false;
+	//if (!inner(func.findInterceptX(testPts), func.findInterceptX(drawnPts))) return false;
+	//if (!inner(func.findInterceptY(testPts), func.findInterceptY(drawnPts))) return false;
+	// if (!inner(func.findTurningPts(testPts), func.findTurningPts(drawnPts))) return false;
+	if (!inSameQuadrant(func.findMaxima(testPts), func.findMaxima(drawnPts))) return false;
+	if (!inSameQuadrant(func.findMinima(testPts), func.findMinima(drawnPts))) return false;
 	return true;
 }
 
@@ -104,23 +111,6 @@ function testSymbols(testSyms, drawnSyms) {
 		else return false;
 }
 
-function compare(pts1, pts2) {
-	function findMinX(pts) {
-		if (pts.length == 0) return 0;
-		var min = canvasWidth;
-		for (var i = 0; i < pts.length; i++) 
-			min = Math.min(min, pts[i].x);
-		return min;
-	}
-	if (findMinX(pts1) < findMinX(pts2)) {
-		return -1;
-	} else if (findMinX(pts1) === findMinX(pts2)) {
-		return 0;
-	} else {
-		return 1;
-	}
-}
-
 
 function test(req, res) {
 	console.log('------------')
@@ -129,7 +119,6 @@ function test(req, res) {
 	// extract canvasHeight and canvasWidth from http request
 	canvasWidth = JSON.parse(req.query.canvasWidth);
 	canvasHeight = JSON.parse(req.query.canvasHeight);
-	
 	// share with func module
 	func.canvasWidth = canvasWidth;
 	func.canvasHeight = canvasHeight;
@@ -137,41 +126,39 @@ function test(req, res) {
 	// extract data
 	var data = JSON.parse(req.query.data);
 	var drawnSyms = data['symbols'];
-	var drawnPoints = data['points'];
+	var drawnPtss = data['ptss'];
 
-	// extract testPoints and symbols from file on server
-	var data = fs.readFileSync(__dirname + "/" + "testPoints.json");
+	// extract testPtss and symbols from file on server
+	var data = fs.readFileSync(__dirname + "/" + "testcase1.json");
 	data = JSON.parse(data);
 	testSyms = data['symbols'];
-	testPoints = data['points'];
+	testPtss = data['ptss'];
 
 	// test
 	var isCorrect = true;
 
-	if (testPoints.length != drawnPoints.length) {
+	if (testPtss.length != drawnPtss.length) {
 		isCorrect = false;
 		console.log("fail 'number of segments' test");
 	} else {
 		console.log("pass 'number of segments' test");
 	}
 
-	if (isCorrect) {
-		if (!testSymbols(testSyms, drawnSyms)) {
-			isCorrect = false;
-			console.log("fail 'symbol' test");
-		} else {
-			console.log("pass 'symbol' test");
-		}
-	}
+	// if (isCorrect) {
+	// 	if (!testSymbols(testSyms, drawnSyms)) {
+	// 		isCorrect = false;
+	// 		console.log("fail 'symbol' test");
+	// 	} else {
+	// 		console.log("pass 'symbol' test");
+	// 	}
+	// }
 		
 	if (isCorrect) {
-		testPoints = testPoints.sort(compare);
-		drawnPoints = drawnPoints.sort(compare);
 
-		for (var i = 0; i < testPoints.length; i++) {
+		for (var i = 0; i < testPtss.length; i++) {
 
 			// test position
-			if (!normalise_test(testPoints[i], drawnPoints[i], normalise_position, error_tolerance_position)) {
+			if (!normalise_test(testPtss[i], drawnPtss[i], normalise_position, error_tolerance_position)) {
 				isCorrect = false;
 				console.log('segment ' + (i+1) + " fail 'position' test");
 			} else {
@@ -179,7 +166,7 @@ function test(req, res) {
 			}
 
 			// test shape
-			if (!normalise_test(testPoints[i], drawnPoints[i], normalise_shape, error_tolerance_shape)) {
+			if (!normalise_test(testPtss[i], drawnPtss[i], normalise_shape, error_tolerance_shape)) {
 				isCorrect = false;
 				console.log('segment ' + (i+1) + " fail 'shape' test");
 			} else {
@@ -187,7 +174,7 @@ function test(req, res) {
 			}
 
 			// test special points
-			if (!testSpecialPts(testPoints[i], drawnPoints[i])) {
+			if (!testSpecialPts(testPtss[i], drawnPtss[i])) {
 				isCorrect = false;
 				console.log('segment ' + (i+1) + " fail 'points' test");
 			} else {
