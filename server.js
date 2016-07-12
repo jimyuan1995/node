@@ -16,6 +16,10 @@ app.get('/test', function(req, res) {
 	tester.test(req, res);
 });
 
+app.get('/javascript/testcase.json', function (req, res) {
+	res.sendFile(__dirname + '/' + 'testcase.json');
+});
+
 var server = app.listen(8080, function () {
   console.log("Server listening localhost::8080");
 });

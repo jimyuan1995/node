@@ -44,6 +44,29 @@ function normalise_shape(pts) {
 	return normalisedPts;
 }
 
+function normalise_test(testPts, drawnPts, normalise) {
+	var normDegree = 3;
+
+	function findError(pts1, pts2) {
+		var err = 0;
+		for (var i = 0; i < pts1.length; i++) {
+			err += Math.pow(getDist(pts1[i], pts2[i]), normDegree);
+		}
+	 	return Math.pow(err, 1 / normDegree) / pts1.length;
+	}
+
+	// if ((testPts[1].x - testPts[0].x) * (drawnPts[1].x - drawnPts[0].x) < 0)
+	// 	drawnPts.reverse();
+
+	var err1 = findError(normalise(testPts), normalise(drawnPts));
+	testPtss.reverse();
+	var err2 = findError(normalise(testPts), normalise(drawnPts));
+	var err = Math.min(err1, err2);
+	
+	console.log(err);
+}
+
+
 function drawNormalisedShape(pts) {
 	pts = normalise_shape(pts);
 	for (var j = 0; j < pts.length; j++) {
@@ -60,32 +83,9 @@ function drawNormalisedPosition(pts) {
 		pts[j].y = pts[j].y * 100 + 300; 
 	}
 	drawCurve(pts, [255, 51, 51]);
-	normalise_test(testPtss[0], drawnPtss[0], normalise_position);
 }
 
-function normalise_test(testPts, drawnPts, normalise) {
-	var normDegree = 3;
 
-	function findError(pts1, pts2) {
-		var err = 0;
-		for (var i = 0; i < pts1.length; i++) {
-			err += Math.pow(getDist(pts1[i], pts2[i]), normDegree);
-		}
-	 	return Math.pow(err, 1 / normDegree) / pts1.length;
-	}
-
-	if ((testPts[1].x - testPts[0].x) * (drawnPts[1].x - drawnPts[0].x) < 0)
-		drawnPts.reverse();
-
-	var err = findError(normalise(testPts), normalise(drawnPts));
-	
-	// testPtss.reverse();
-	// var err2 = findError(normalise(testPtss), normalise(drawnPtss));
-	// var err = Math.min(err1, err2);
-	
-	console.log(err);
-	
-}
 
 
 

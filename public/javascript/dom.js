@@ -1,5 +1,6 @@
 // provide interactive elements beyond the canvas, including buttons and selects.
 var upper = 20;
+var bottom = 680;
 
 function drawButton() {
 
@@ -14,22 +15,11 @@ function drawButton() {
 	buttonTestcase.mousePressed(showTestCase);
 
 
-	var buttonPrint = createButton("print");
-	buttonPrint.position(200, upper);
-	buttonPrint.mousePressed(function() {
-		var data = getData();
-		console.log(JSON.stringify(data));
+	var buttonShape = createButton("custom");
+	buttonShape.position(200, upper);
+	buttonShape.mousePressed( function() {
+		//
 	});
-
-	var buttonShape = createButton("normalise");
-	buttonShape.position(250, upper);
-	buttonShape.mousePressed(function() {
-		drawNormalisedShape(drawnPtss[0]);
-		drawNormalisedPosition(drawnPtss[0]);
-	});
-
-
-
 
 
 	// redo and undo is essentially the reverse of each other.
@@ -193,6 +183,13 @@ function drawButton() {
 
 		drawBackground();
 		drawSymbols(symbols, 0);
+	});
+
+	var buttonPrint = createButton("print");
+	buttonPrint.position(600, bottom);
+	buttonPrint.mousePressed(function() {
+		var data = getData();
+		console.log(JSON.stringify(data));
 	});
 }
 

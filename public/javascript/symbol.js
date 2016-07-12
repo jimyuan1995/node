@@ -1,6 +1,6 @@
 // special file for symbols.
 
-function createSymbol(text, x, y, default_x, default_y, category, bindCurve, bindCurveIdx) {
+function createSymbol(text, x, y, default_x, default_y, category, bindCurve) {
 	var obj = {};
 	obj.text = text;
 	obj.x = x;
@@ -31,6 +31,7 @@ var symbols,
 
 function restore_symbols() {
 	symbols = [];
+	var s = "<svg width='100' height='100'> <circle cx='50' cy='50' r='40' stroke='green' stroke-width='4' fill='yellow' /> </svg>"
 	symbols.push(createSymbol('A', padding, padding ));
 	symbols.push(createSymbol('B', padding + 30, padding));
 }

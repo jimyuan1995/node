@@ -69,7 +69,7 @@ function normalise_test(testPts, drawnPts, normalise, error_tolerance) {
 	// 	drawnPts.reverse();
 
 	var err1 = findError(normalise(testPts), normalise(drawnPts));
-	testPtss.reverse();
+	testPts.reverse();
 	var err2 = findError(normalise(testPts), normalise(drawnPts));
 	var err = Math.min(err1, err2);
 	
@@ -104,7 +104,8 @@ function testSymbols(testSyms, drawnSyms) {
 	for (var i = 0; i < testSyms.length; i++) {
 		if (testSyms[i].text != drawnSyms[i].text) isSame = false
 		else if (testSyms[i].bindCurveIdx != drawnSyms[i].bindCurveIdx) isSame = false
-		else if (testSyms[i].category != drawnSyms[i].category) isSame = false;
+		else if (testSyms[i].category != drawnSyms[i].category) isSame = false
+		else if (testSyms[i].ctgNum != drawnSyms[i].ctgNum) isSame = false;
 		if (!isSame) break;
 	}
 	if (isSame) return true
@@ -113,7 +114,7 @@ function testSymbols(testSyms, drawnSyms) {
 
 
 function test(req, res) {
-	console.log('------------')
+	console.log('------------');
 	console.log("Request handler 'test' was called.");
 
 	// extract canvasHeight and canvasWidth from http request
@@ -124,12 +125,14 @@ function test(req, res) {
 	func.canvasHeight = canvasHeight;
 
 	// extract data
+	// console.log(req.query.data);
 	var data = JSON.parse(req.query.data);
 	var drawnSyms = data['symbols'];
 	var drawnPtss = data['ptss'];
 
+
 	// extract testPtss and symbols from file on server
-	var data = fs.readFileSync(__dirname + "/" + "testcase1.json");
+	var data = fs.readFileSync(__dirname + "/" + "testcase.json");
 	data = JSON.parse(data);
 	testSyms = data['symbols'];
 	testPtss = data['ptss'];
@@ -144,16 +147,16 @@ function test(req, res) {
 		console.log("pass 'number of segments' test");
 	}
 
-	// if (isCorrect) {
-	// 	if (!testSymbols(testSyms, drawnSyms)) {
-	// 		isCorrect = false;
-	// 		console.log("fail 'symbol' test");
-	// 	} else {
-	// 		console.log("pass 'symbol' test");
-	// 	}
-	// }
-		
 	if (isCorrect) {
+		if (!testSymbols(testSyms, drawnSyms)) {
+			isCorrect = false;
+			console.log("fail 'symbol' test");
+		} else {
+			console.log("pass 'symbol' test");
+		}
+	}
+		
+	// if (isCorrect) {
 
 		for (var i = 0; i < testPtss.length; i++) {
 
@@ -183,7 +186,7 @@ function test(req, res) {
 
 			// if (!isCorrect) break;
 		}
-	}	
+	// }	
 			
 	res.set('Content-Type', 'text/html');
 	if (isCorrect) {

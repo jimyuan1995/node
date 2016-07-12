@@ -1,5 +1,9 @@
 Further task:
 1. curve editing
 2. movable axis
+3. knots merging
+
+
+Symbol testing
 
 

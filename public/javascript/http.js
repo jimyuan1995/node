@@ -31,7 +31,14 @@ function getData() {
 		if (symbols[i].bindCurve != undefined) {
 			obj.category = symbols[i].category;
 			obj.bindCurveIdx = ptss.indexOf(symbols[i].bindCurve);
-		}
+			
+			var knots = symbols[i].bindCurve[symbols[i].category];
+			for (var j = 0; j < knots.length; j++) 
+				if (knots[j].x == symbols[i].x && knots[j].y == symbols[i].y) {
+					obj.ctgIdx = j;
+					break;
+				}
+		}			
 		sbls.push(obj);
 	}
 
@@ -55,4 +62,4 @@ function send() {
 	}
 	xhr.send();
 }
-
+	

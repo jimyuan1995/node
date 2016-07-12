@@ -6,7 +6,7 @@
 var canvasHeight = 600, 
 	canvasWidth = 600,
 	gridWidth = 50,
-	strkWeight = 2,
+	strkWeight = 1.5,
 	padding = 15;
 	
 
@@ -129,7 +129,7 @@ function drawLabel() {
 
 	textSize(16);
 	stroke(0);
-	strokeWeight(1);
+	strokeWeight(0.5);
 	fill(0);
 
 	text("O", canvasWidth/2 - 15, canvasHeight/2 + 15);
@@ -185,6 +185,7 @@ function drawCurve(pts, color) {
 	pop();
 
 	// draw x intercepts, y intercepts and turning points
+	drawKnots
 	drawKnots([].concat(pts['inter_x'], pts['inter_y'], pts['maxima'], pts['minima']), 0);
 }
 
@@ -196,6 +197,8 @@ function drawCurves(ptss, color) {
 
 // given a set of points, draw the corresponding points (knots).
 function drawKnot(knot, color) {
+	if (knot == undefined) return;
+
 	push();
 	noFill();
 	stroke(color);
@@ -205,8 +208,8 @@ function drawKnot(knot, color) {
 	// 	knot = createPoint(canvasWidth/2, canvasHeight/2);
 	// ellipse(knot.x, knot.y, 10, 10);
 
-	line(knot.x - 4, knot.y - 4, knot.x + 4, knot.y + 4);
-	line(knot.x + 4, knot.y - 4, knot.x - 4, knot.y + 4);
+	line(knot.x - 3, knot.y - 3, knot.x + 3, knot.y + 3);
+	line(knot.x + 3, knot.y - 3, knot.x - 3, knot.y + 3);
 	
 	pop();
 }
@@ -225,16 +228,17 @@ function drawKnots(knots, color) {
 
 // draw symbols, e.g. "A", "B".
 function drawSymbol(symbol, color) {
+
 	push();
 	
 	stroke(color);
-	strokeWeight(1);
+	strokeWeight(1.5);
 	noFill();
-	line(symbol.x - 4, symbol.y - 4, symbol.x + 4, symbol.y + 4);
-	line(symbol.x + 4, symbol.y - 4, symbol.x - 4, symbol.y + 4);	
+	line(symbol.x - 3, symbol.y - 3, symbol.x + 3, symbol.y + 3);
+	line(symbol.x + 3, symbol.y - 3, symbol.x - 3, symbol.y + 3);	
 	
 	stroke(0);
-	strokeWeight(1);
+	strokeWeight(0.5);
 	fill(0);
 	textSize(14);
 	text(symbol.text, symbol.x - 4, symbol.y + 20);
