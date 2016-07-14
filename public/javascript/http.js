@@ -2,6 +2,24 @@
 // data is sent in terms of JSON string using GET method via XMLHttpRequest
 
 function getData() {
+
+	var data = {};
+
+	if (canvasWidth > 5000 || canvasWidth <= 0) {
+		console.log("Invalid canvasWidth.");
+		return;
+	}
+
+	if (canvasHeight > 5000 || canvasHeight <= 0) {
+		console.log("Invalid canvasHeight.");
+		return;
+	}
+
+	data['canvasWidth'] = canvasWidth;
+	data['canvasHeight'] = canvasHeight;
+
+
+	// sort segments according to their left most points.
 	var ptss = [];
 	for (var i = 0; i < drawnPtss.length; i++) 
 		ptss.push(drawnPtss[i]);
@@ -22,12 +40,13 @@ function getData() {
 	}
 	ptss.sort(compare);
 
+
 	sbls = [];
 	for (var i = 0; i < symbols.length; i++) {
 		var obj = {};
 		obj.text = symbols[i].text;
-		obj.x = symbols[i].x;
-		obj.y = symbols[i].y;
+		obj.x = (symbols[i].x - canvasWidth/2) / (canvasWidth/2);
+		obj.y = (canvasHeight/2 - symbols[i].y) / (canvasHeight/2);
 		if (symbols[i].bindCurve != undefined) {
 			obj.category = symbols[i].category;
 			obj.bindCurveIdx = ptss.indexOf(symbols[i].bindCurve);
@@ -35,16 +54,24 @@ function getData() {
 			var knots = symbols[i].bindCurve[symbols[i].category];
 			for (var j = 0; j < knots.length; j++) 
 				if (knots[j].x == symbols[i].x && knots[j].y == symbols[i].y) {
-					obj.ctgIdx = j;
+					obj.catIndex = j;
 					break;
 				}
 		}			
 		sbls.push(obj);
 	}
-
-	var data = {};
 	data['symbols'] = sbls;
-	data['ptss'] = ptss;
+
+
+	var adjusted_ptss = [];
+	for (var i = 0; i < ptss.length; i++) {
+		var pts = ptss[i],
+			adjusted_pts = [];
+		for (var j = 0; j < pts.length; j++) 
+			adjusted_pts.push(createPoint((pts[j].x - canvasWidth/2) / (canvasWidth/2), (canvasHeight/2 - pts[j].y) / (canvasHeight/2)));
+		adjusted_ptss.push(adjusted_pts);
+	}
+	data['ptss'] = adjusted_ptss;
 
 	return data;
 }

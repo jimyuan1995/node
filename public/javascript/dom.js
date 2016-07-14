@@ -1,22 +1,105 @@
 // provide interactive elements beyond the canvas, including buttons and selects.
-var upper = 20;
-var bottom = 680;
 
 function drawButton() {
+	var upper = 20;
+	var bottom = 680;
 
 	var buttonTest = createButton("test");
-	buttonTest.position(50, upper);
+	buttonTest.position(450, upper);
 	buttonTest.mousePressed(function() {
 		send();
 	});
 
 	var buttonTestcase = createButton("show test case");
-	buttonTestcase.position(100, upper);
-	buttonTestcase.mousePressed(showTestCase);
+	buttonTestcase.position(50, bottom);
+	buttonTestcase.mousePressed(function () {
+		var url = '/json/test.json';
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", url, true);
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				var data = JSON.parse(xhr.responseText);
+
+				var syms = data['symbols'];
+				var ptss = data['ptss'];
+
+				for (var i = 0; i < ptss.length; i++) {
+					var pts = ptss[i];
+					for (var j = 0; j < pts.length; j++) {
+						pts[j].x = pts[j].x * canvasWidth/2 + canvasWidth/2;
+						pts[j].y = canvasHeight/2 - pts[j].y * canvasHeight/2;
+					}
+				}
+
+				for (var i = 0; i < syms.length; i++) {
+					syms[i].x = syms[i].x * canvasWidth/2 + canvasWidth/2;
+					syms[i].y = canvasHeight/2 - syms[i].y * (canvasHeight/2);
+				}
+
+				for (var i = 0; i < ptss.length; i++) {
+					ptss[i]['inter_x'] = findInterceptX(ptss[i]);
+					ptss[i]['inter_y'] = findInterceptY(ptss[i]);
+					ptss[i]['maxima'] = findMaxima(ptss[i]);
+					ptss[i]['minima'] = findMinima(ptss[i]);
+				}
+
+				drawCurves(ptss, 0);
+				drawSymbols(syms, 0);
+
+			}
+		}
+		xhr.send();
+
+		
+	});
+
+	var buttonDrawnCase = createButton("show drawn case");
+	buttonDrawnCase.position(150, bottom);
+	buttonDrawnCase.mousePressed(function () {
+
+		var url = '/json/drawn.json';
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", url, true);
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				var data = JSON.parse(xhr.responseText);
+
+				var syms = data['symbols'];
+				var ptss = data['ptss'];
+
+				for (var i = 0; i < ptss.length; i++) {
+					var pts = ptss[i];
+					for (var j = 0; j < pts.length; j++) {
+						pts[j].x = pts[j].x * canvasWidth/2 + canvasWidth/2;
+						pts[j].y = canvasHeight/2 - pts[j].y * (canvasHeight/2);
+					}
+				}
+
+				for (var i = 0; i < syms.length; i++) {
+					syms[i].x = syms[i].x * canvasWidth/2 + canvasWidth/2;
+					syms[i].y = canvasHeight/2 - syms[i].y * (canvasHeight/2);
+				}
+
+				for (var i = 0; i < ptss.length; i++) {
+					ptss[i]['inter_x'] = findInterceptX(ptss[i]);
+					ptss[i]['inter_y'] = findInterceptY(ptss[i]);
+					ptss[i]['maxima'] = findMaxima(ptss[i]);
+					ptss[i]['minima'] = findMinima(ptss[i]);
+				}
+
+				drawCurves(ptss, 0);
+				drawSymbols(syms, 0);
+
+			}
+		}
+		xhr.send();
+
+
+	});
 
 
 	var buttonShape = createButton("custom");
-	buttonShape.position(200, upper);
+	buttonShape.position(50, upper);
 	buttonShape.mousePressed( function() {
 		//
 	});
@@ -185,11 +268,38 @@ function drawButton() {
 		drawSymbols(symbols, 0);
 	});
 
-	var buttonPrint = createButton("print");
-	buttonPrint.position(600, bottom);
-	buttonPrint.mousePressed(function() {
+	var buttonPrintTest = createButton("print test case");
+	buttonPrintTest.position(450, bottom);
+	buttonPrintTest.mousePressed(function() {
 		var data = getData();
-		console.log(JSON.stringify(data));
+		var params = "data=" + JSON.stringify(data);
+
+		var url = '/print_test';
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", url + "?" + params, true);
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				//
+			}
+		}
+		xhr.send();
+	});
+
+	var buttonPrintDrawn = createButton("print drawn case");
+	buttonPrintDrawn.position(550, bottom);
+	buttonPrintDrawn.mousePressed(function() {
+		var data = getData();
+		var params = "data=" + JSON.stringify(data);
+
+		var url = '/print_drawn';
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", url + "?" + params, true);
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				//
+			}
+		}
+		xhr.send();
 	});
 }
 

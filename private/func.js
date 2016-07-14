@@ -46,7 +46,7 @@ function findInterceptX(pts) {
 			var dy = pts[i].y - pts[i-1].y;
 			var grad = dy/dx;
 			var esti = pts[i-1].x + (1 / grad) * (canvasHeight/2 - pts[i-1].y);
-			intercepts.push(new Point(esti, canvasHeight/2));
+			intercepts.push(createPoint(esti, canvasHeight/2));
 		}
 	}
 
@@ -72,7 +72,7 @@ function findInterceptY(pts) {
 			var dy = pts[i].y - pts[i-1].y;
 			var grad = dy/dx;
 			var esti = pts[i-1].y + grad * (canvasWidth/2 - pts[i-1].x);
-			intercepts.push(new Point(canvasWidth/2, esti));
+			intercepts.push(createPoint(canvasWidth/2, esti));
 		}
 	}
 

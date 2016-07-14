@@ -2,8 +2,24 @@ Further task:
 1. curve editing
 2. movable axis
 3. knots merging
+4. assymptotes
+5. latex symbols
+6. reduce number of decimal stored in JSON
+
+java backend
 
 
-Symbol testing
+London 3-4
+爱丁堡 1-2
+southampton 1
+newcastle 1
+manchester 1
+Cambridge 1-2
+
+
+行程
+机票
+签证	
+
 
 
