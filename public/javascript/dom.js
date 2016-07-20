@@ -7,7 +7,20 @@ function drawButton() {
 	var buttonTest = createButton("test");
 	buttonTest.position(450, upper);
 	buttonTest.mousePressed(function() {
-		send();
+		var params = 'data=' + JSON.stringify(getData()),
+		url = "http://localhost:8080/test",
+		xhr = new XMLHttpRequest();
+
+		xhr.open("POST", url, true);
+		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				var data = JSON.parse(xhr.responseText);
+				console.log(data);
+				alert(data['isCorrect']);
+			}
+		}
+		xhr.send(params);
 	});
 
 	var buttonTestcase = createButton("show test case");
@@ -26,14 +39,14 @@ function drawButton() {
 				for (var i = 0; i < ptss.length; i++) {
 					var pts = ptss[i];
 					for (var j = 0; j < pts.length; j++) {
-						pts[j].x = pts[j].x * canvasWidth/2 + canvasWidth/2;
-						pts[j].y = canvasHeight/2 - pts[j].y * canvasHeight/2;
+						pts[j].x = pts[j].x * canvasWidth + canvasWidth/2;
+						pts[j].y = canvasHeight/2 - pts[j].y * canvasHeight;
 					}
 				}
 
 				for (var i = 0; i < syms.length; i++) {
-					syms[i].x = syms[i].x * canvasWidth/2 + canvasWidth/2;
-					syms[i].y = canvasHeight/2 - syms[i].y * (canvasHeight/2);
+					syms[i].x = syms[i].x * canvasWidth + canvasWidth/2;
+					syms[i].y = canvasHeight/2 - syms[i].y * canvasHeight;
 				}
 
 				for (var i = 0; i < ptss.length; i++) {
@@ -53,49 +66,49 @@ function drawButton() {
 		
 	});
 
-	var buttonDrawnCase = createButton("show drawn case");
-	buttonDrawnCase.position(150, bottom);
-	buttonDrawnCase.mousePressed(function () {
+	// var buttonDrawnCase = createButton("show drawn case");
+	// buttonDrawnCase.position(150, bottom);
+	// buttonDrawnCase.mousePressed(function () {
 
-		var url = '/json/drawn.json';
-		var xhr = new XMLHttpRequest();
-		xhr.open("GET", url, true);
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200) {
-				var data = JSON.parse(xhr.responseText);
+	// 	var url = '/json/drawn.json';
+	// 	var xhr = new XMLHttpRequest();
+	// 	xhr.open("GET", url, true);
+	// 	xhr.onreadystatechange = function() {
+	// 		if (xhr.readyState == 4 && xhr.status == 200) {
+	// 			var data = JSON.parse(xhr.responseText);
 
-				var syms = data['symbols'];
-				var ptss = data['ptss'];
+	// 			var syms = data['symbols'];
+	// 			var ptss = data['ptss'];
 
-				for (var i = 0; i < ptss.length; i++) {
-					var pts = ptss[i];
-					for (var j = 0; j < pts.length; j++) {
-						pts[j].x = pts[j].x * canvasWidth/2 + canvasWidth/2;
-						pts[j].y = canvasHeight/2 - pts[j].y * (canvasHeight/2);
-					}
-				}
+	// 			for (var i = 0; i < ptss.length; i++) {
+	// 				var pts = ptss[i];
+	// 				for (var j = 0; j < pts.length; j++) {
+	// 					pts[j].x = pts[j].x * canvasWidth + canvasWidth/2;
+	// 					pts[j].y = canvasHeight/2 - pts[j].y * canvasHeight;
+	// 				}
+	// 			}
 
-				for (var i = 0; i < syms.length; i++) {
-					syms[i].x = syms[i].x * canvasWidth/2 + canvasWidth/2;
-					syms[i].y = canvasHeight/2 - syms[i].y * (canvasHeight/2);
-				}
+	// 			for (var i = 0; i < syms.length; i++) {
+	// 				syms[i].x = syms[i].x * canvasWidth + canvasWidth/2;
+	// 				syms[i].y = canvasHeight/2 - syms[i].y * canvasHeight;
+	// 			}
 
-				for (var i = 0; i < ptss.length; i++) {
-					ptss[i]['inter_x'] = findInterceptX(ptss[i]);
-					ptss[i]['inter_y'] = findInterceptY(ptss[i]);
-					ptss[i]['maxima'] = findMaxima(ptss[i]);
-					ptss[i]['minima'] = findMinima(ptss[i]);
-				}
+	// 			for (var i = 0; i < ptss.length; i++) {
+	// 				ptss[i]['inter_x'] = findInterceptX(ptss[i]);
+	// 				ptss[i]['inter_y'] = findInterceptY(ptss[i]);
+	// 				ptss[i]['maxima'] = findMaxima(ptss[i]);
+	// 				ptss[i]['minima'] = findMinima(ptss[i]);
+	// 			}
 
-				drawCurves(ptss, 0);
-				drawSymbols(syms, 0);
+	// 			drawCurves(ptss, 0);
+	// 			drawSymbols(syms, 0);
 
-			}
-		}
-		xhr.send();
+	// 		}
+	// 	}
+	// 	xhr.send();
 
 
-	});
+	// });
 
 
 	var buttonShape = createButton("custom");
@@ -285,22 +298,22 @@ function drawButton() {
 		xhr.send();
 	});
 
-	var buttonPrintDrawn = createButton("print drawn case");
-	buttonPrintDrawn.position(550, bottom);
-	buttonPrintDrawn.mousePressed(function() {
-		var data = getData();
-		var params = "data=" + JSON.stringify(data);
+	// var buttonPrintDrawn = createButton("print drawn case");
+	// buttonPrintDrawn.position(550, bottom);
+	// buttonPrintDrawn.mousePressed(function() {
+	// 	var data = getData();
+	// 	var params = "data=" + JSON.stringify(data);
 
-		var url = '/print_drawn';
-		var xhr = new XMLHttpRequest();
-		xhr.open("GET", url + "?" + params, true);
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200) {
-				//
-			}
-		}
-		xhr.send();
-	});
+	// 	var url = '/print_drawn';
+	// 	var xhr = new XMLHttpRequest();
+	// 	xhr.open("GET", url + "?" + params, true);
+	// 	xhr.onreadystatechange = function() {
+	// 		if (xhr.readyState == 4 && xhr.status == 200) {
+	// 			//
+	// 		}
+	// 	}
+	// 	xhr.send();
+	// });
 }
 
 

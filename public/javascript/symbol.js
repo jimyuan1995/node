@@ -1,4 +1,6 @@
 // special file for symbols.
+var symbols,
+	padding = 15;
 
 function createSymbol(text, x, y, default_x, default_y, category, bindCurve) {
 	var obj = {};
@@ -25,9 +27,6 @@ function clone(sym) {
 	obj.bindCurve = sym.bindCurve;
 	return obj;
 }
-
-var symbols,
-	padding = 15;
 
 function restore_symbols() {
 	symbols = [];

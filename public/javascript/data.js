@@ -1,6 +1,3 @@
-// send data to server for testing correctness of the graph
-// data is sent in terms of JSON string using GET method via XMLHttpRequest
-
 function getData() {
 
 	var data = {};
@@ -45,8 +42,8 @@ function getData() {
 	for (var i = 0; i < symbols.length; i++) {
 		var obj = {};
 		obj.text = symbols[i].text;
-		obj.x = (symbols[i].x - canvasWidth/2) / (canvasWidth/2);
-		obj.y = (canvasHeight/2 - symbols[i].y) / (canvasHeight/2);
+		obj.x = (symbols[i].x - canvasWidth/2) / canvasWidth;
+		obj.y = (canvasHeight/2 - symbols[i].y) / canvasHeight;
 		if (symbols[i].bindCurve != undefined) {
 			obj.category = symbols[i].category;
 			obj.bindCurveIdx = ptss.indexOf(symbols[i].bindCurve);
@@ -68,25 +65,10 @@ function getData() {
 		var pts = ptss[i],
 			adjusted_pts = [];
 		for (var j = 0; j < pts.length; j++) 
-			adjusted_pts.push(createPoint((pts[j].x - canvasWidth/2) / (canvasWidth/2), (canvasHeight/2 - pts[j].y) / (canvasHeight/2)));
+			adjusted_pts.push(createPoint((pts[j].x - canvasWidth/2) / canvasWidth, (canvasHeight/2 - pts[j].y) / canvasHeight));
 		adjusted_ptss.push(adjusted_pts);
 	}
 	data['ptss'] = adjusted_ptss;
 
 	return data;
 }
-
-function send() {
-	var data = getData();
-	var params = 'data=' + JSON.stringify(data) + '&canvasWidth=' + canvasWidth + '&canvasHeight=' + canvasHeight;
-	var xhr = new XMLHttpRequest();
-	var url = "/test";
-	xhr.open("GET", url + '?' + params, true);
-	xhr.onreadystatechange = function() {
-		if (xhr.readyState == 4 && xhr.status == 200) {
-			alert(xhr.responseText);
-		}
-	}
-	xhr.send();
-}
-	
