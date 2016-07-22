@@ -23,6 +23,8 @@ app.get('/json/test.json', function (req, res) {
 
 app.get('/print_test', function(req, res) {
 	printer.print("/Users/YUAN/Desktop/nodejs/public/json/test.json", req.query.data);
+	res.set('Content-Type', 'text/html');
+	res.send("Print to /Users/YUAN/Desktop/nodejs/public/json/test.json success!");
 });
 
 app.get('/print_drawn', function(req, res) {

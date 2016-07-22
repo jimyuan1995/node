@@ -1,26 +1,24 @@
+/**
+ * Copyright 2016 Junwei Yuan
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ *
+ * You may obtain a copy of the License at
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 // offer support for front-end and back-end. 
 // auxiliary functions used in both sides.
 
-function createPoint(x, y) {
-	var obj = {};
-	obj.x = x;
-	obj.y = y;
-	return obj;
-}
-
 function getDist(pt1, pt2) {
 	return Math.sqrt(Math.pow(pt1.x - pt2.x, 2) + Math.pow(pt1.y - pt2.y, 2));
-}
-
-function funcPts(func, begin, end) {
-	var num = 200;
-	var limit = 1;
-	var step = (end - begin) / num;
-	var pts = [];
-	for (var x = begin; x < end; x += step) {
-		pts.push(createPoint(x, func(x)));
-	}
-	return pts;
 }
 
 function findInterceptX(pts) {
@@ -31,7 +29,7 @@ function findInterceptX(pts) {
 	if (pts[0].y == canvasHeight/2) intercepts.push(pts[0]);
 	for (var i = 1; i < pts.length; i++) {
 		if (pts[i].y == canvasHeight/2) {
-			intercepts.push(pts[i]);
+			intercepts.push(createPoint(pts[i].x, pts[i].y));
 			continue;
 		}
 
@@ -55,7 +53,7 @@ function findInterceptY(pts) {
 	if (pts[0].x == canvasWidth/2) intercepts.push(pts[0]);
 	for (var i = 1; i < pts.length; i++) {
 		if (pts[i].x == canvasWidth/2) {
-			intercepts.push(pts[i]);
+			intercepts.push(createPoint(pts[i].x, pts[i].y));
 			continue;
 		}
 
@@ -70,29 +68,6 @@ function findInterceptY(pts) {
 
 	return intercepts;
 }
-
-function findTurningPts(pts) {
-	if (pts.length == 0) return [];
-
-	var turningPts = [];
-
-	var grad = [];
-	for (var i = 0; i < pts.length - 1; i++) {
-		var dx = pts[i+1].x - pts[i].x;
-		var dy = pts[i+1].y - pts[i].y;
-		grad.push(dy/dx);
-	}
-
-	for (var i = 1; i < grad.length; i++) {
-		if (grad[i-1] != NaN && grad[i] != NaN && grad[i-1] * grad[i] < 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
-			if (Math.abs(grad[i-1] - grad[i]) > 0.01) 
-				turningPts.push(pts[i]);
-		}
-	}
-
-	return turningPts;
-}
-
 
 function findMaxima(pts) {
 	if (pts.length == 0) return [];
@@ -127,7 +102,7 @@ function findMaxima(pts) {
 			
 
 			if (Math.abs(grad1) > 0.03 && Math.abs(grad2) > 0.03) {
-				maxima.push(pts[i]);
+				maxima.push(createPoint(pts[i].x, pts[i].y));
 			}
 		}
 	}
@@ -169,7 +144,7 @@ function findMinima(pts) {
 			
 
 			if (Math.abs(grad1) > 0.03 && Math.abs(grad2) > 0.03) {
-				minima.push(pts[i]);
+				minima.push(createPoint(pts[i].x, pts[i].y));
 			}
 		}
 	}

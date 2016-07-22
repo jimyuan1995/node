@@ -14,19 +14,9 @@
  * limitations under the License.
  */
 
-// special file for symbols.
-var padding = 15;
-
-function createSymbol(text, x, y) {
+function createPoint(x, y) {
 	var obj = {};
-	obj.text = text;
 	obj.x = x;
 	obj.y = y;
 	return obj;
 }
-
-freeSymbols = [];
-freeSymbols.push(createSymbol('A'));
-freeSymbols.push(createSymbol('B'));
-freeSymbols.push(createSymbol('C'));
-
