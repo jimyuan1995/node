@@ -25,8 +25,22 @@ function createSymbol(text, x, y) {
 	return obj;
 }
 
-freeSymbols = [];
-freeSymbols.push(createSymbol('A'));
-freeSymbols.push(createSymbol('B'));
-freeSymbols.push(createSymbol('C'));
+function refreshFreeSymbols() {
+	var start = 15, 
+		separation = 30;
 
+	for (var i = 0; i < freeSymbols.length; i++) {
+		var symbol = freeSymbols[i];
+		symbol.x = start + i * separation;
+		symbol.y = start;
+	}
+}
+
+function restore() {
+	freeSymbols = [];
+	freeSymbols.push(createSymbol('A'));
+	freeSymbols.push(createSymbol('B'));
+	freeSymbols.push(createSymbol('C'));
+}
+
+restore();

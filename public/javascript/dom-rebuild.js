@@ -60,11 +60,26 @@ function drawButton() {
 		xhr.send();
 	});
 
-	// var buttonDrawnCase = createButton("show drawn case");
-	// buttonDrawnCase.position(150, bottom);
-	// buttonDrawnCase.mousePressed(function () {
+	var buttonDrawnCase = createButton("show drawn case");
+	buttonDrawnCase.position(150, bottom);
+	buttonDrawnCase.mousePressed(function () {
+		var url = '/json/drawn.json';
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", url, true);
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				var data = JSON.parse(xhr.responseText);
+				decodeData(data);
 
-	// });
+				var freeSymbols = data.freeSymbols;
+				var curves = data.curves;
+
+				drawCurves(curves);
+				drawSymbols(freeSymbols, 0);
+			}
+		}
+		xhr.send();
+	});
 
 
 	var buttonShape = createButton("custom");
@@ -119,6 +134,7 @@ function drawButton() {
 	buttonClear.mousePressed(function() {
 		curves = [];
 		drawBackground();
+		restore();
 		refreshFreeSymbols();
 		drawSymbols(freeSymbols);
 	});
@@ -140,11 +156,22 @@ function drawButton() {
 		xhr.send();
 	});
 
-	// var buttonPrintDrawn = createButton("print drawn case");
-	// buttonPrintDrawn.position(550, bottom);
-	// buttonPrintDrawn.mousePressed(function() {
+	var buttonPrintDrawn = createButton("print drawn case");
+	buttonPrintDrawn.position(550, bottom);
+	buttonPrintDrawn.mousePressed(function() {
+		var data = encodeData();
+		var params = "data=" + JSON.stringify(data);
 
-	// });
+		var url = '/print_drawn';
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", url + "?" + params, true);
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				alert(xhr.responseText);
+			}
+		}
+		xhr.send();
+	});
 }
 
 
