@@ -24,7 +24,7 @@ function drawButton() {
 	buttonTest.position(450, upper);
 	buttonTest.mousePressed(function() {
 		var params = 'data=' + JSON.stringify(encodeData()),
-		url = "http://localhost:8080/test",
+		url = "http://localhost:5000/test",
 		xhr = new XMLHttpRequest();
 
 		xhr.open("POST", url, true);
@@ -99,15 +99,18 @@ function drawButton() {
 		var checkPointRedo = {};
 		checkPointRedo.freeSymbolsJSON = JSON.stringify(freeSymbols);
 		checkPointRedo.curvesJSON = JSON.stringify(curves);
+		checkPointRedo.clickedKnotJSON = JSON.stringify(clickedKnot);
 		checkPointsRedo.push(checkPointRedo);
 
 		var checkPointUndo = checkPointsUndo.pop();
 		freeSymbols = JSON.parse(checkPointUndo.freeSymbolsJSON);
 		curves = JSON.parse(checkPointUndo.curvesJSON);
+		clickedKnot = JSON.parse(checkPointUndo.clickedKnotJSON);
 
 		drawBackground();
 		drawCurves(curves);
 		drawSymbols(freeSymbols);
+		drawKnot3(clickedKnot);
 	});
 
 	var buttonRedo = createButton("redo");
@@ -118,21 +121,29 @@ function drawButton() {
 		var checkPointUndo = {};
 		checkPointUndo.freeSymbolsJSON = JSON.stringify(freeSymbols);
 		checkPointUndo.curvesJSON = JSON.stringify(curves);
+		checkPointUndo.clickedKnotJSON = JSON.stringify(clickedKnot);
 		checkPointsUndo.push(checkPointUndo);
 
 		var checkPointRedo = checkPointsRedo.pop();
 		freeSymbols = JSON.parse(checkPointRedo.freeSymbolsJSON);
 		curves = JSON.parse(checkPointRedo.curvesJSON);
+		clickedKnot = JSON.parse(checkPointRedo.clickedKnotJSON);
 		
 		drawBackground();
 		drawCurves(curves);
 		drawSymbols(freeSymbols);
+		drawKnot3(clickedKnot);
 	});
 
 	var buttonClear = createButton('clear');
 	buttonClear.position(600, upper);
 	buttonClear.mousePressed(function() {
 		curves = [];
+		clickedKnot = null;
+
+		checkPointsUndo = [];
+		checkPointsRedo = [];
+
 		drawBackground();
 		restore();
 		refreshFreeSymbols();
