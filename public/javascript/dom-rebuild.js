@@ -33,7 +33,7 @@ function drawButton() {
 			if (xhr.readyState == 4 && xhr.status == 200) {
 				var data = JSON.parse(xhr.responseText);
 				console.log(data);
-				alert(data['isCorrect']);
+				alert(data['isCorrect'] + ": " + data['errCause']);
 			}
 		}
 		xhr.send(params);

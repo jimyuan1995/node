@@ -849,13 +849,13 @@ function mouseReleased() {
 			return;
 		}
 
-		if (Math.abs(drawnPts[0].y - canvasHeight/2) < 5) 
+		if (Math.abs(drawnPts[0].y - canvasHeight/2) < 0.01 * canvasHeight) 
 			drawnPts[0].y = canvasHeight/2;
-		if (Math.abs(drawnPts[0].x - canvasWidth/2) < 5) 
+		if (Math.abs(drawnPts[0].x - canvasWidth/2) < 0.01 * canvasWidth) 
 			drawnPts[0].x = canvasWidth/2;
-		if (Math.abs(drawnPts[drawnPts.length - 1].y - canvasHeight/2) < 5) 
+		if (Math.abs(drawnPts[drawnPts.length - 1].y - canvasHeight/2) < 0.01 * canvasHeight) 
 			drawnPts[drawnPts.length - 1].y = canvasHeight/2;
-		if (Math.abs(drawnPts[drawnPts.length - 1].x - canvasWidth/2) < 5) 
+		if (Math.abs(drawnPts[drawnPts.length - 1].x - canvasWidth/2) < 0.01 * canvasWidth) 
 			drawnPts[drawnPts.length - 1].x = canvasWidth/2;
 
 	

@@ -82,27 +82,28 @@ function findMaxima(pts) {
 	}
 
 	for (var i = 1; i < grad.length; i++) {
-		if (grad[i-1] != NaN && grad[i] != NaN && grad[i-1] < 0 && grad[i] > 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
-			// if (Math.abs(grad[i-1] - grad[i]) > 0.015) 
-			// if (Math.abs(grad[i-1]) > 0.005 && Math.abs([grad[i]]) > 0.005)
-			var l = i-1;
-			while (l >= 0 && getDist(pts[l], pts[i]) < 15) l--;
-			if (l < 0) continue;
-			var dy = pts[i].y - pts[l].y;
-			var dx = pts[i].x - pts[l].x;
-			var grad1 = dy/dx;
+		if (grad[i-1] != NaN && grad[i] != NaN) {
+			if (grad[i] * grad[i-1] < 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
 
-			var r = i+1;
-			while (r < pts.length && getDist(pts[r], pts[i]) < 15) r++;
-			if (r >= pts.length) continue;
-			var dy = pts[r].y - pts[i].y;
-			var dx = pts[r].x - pts[i].x;
-			var grad2 = dy/dx;
+				var l = i-1;
+				while (l >= 0 && getDist(pts[l], pts[i]) < 15) l--;
+				if (l < 0) continue;
+				var dy = pts[i].y - pts[l].y;
+				var dx = pts[i].x - pts[l].x;
+				var grad1 = dy/dx;
 
-			
+				var r = i+1;
+				while (r < pts.length && getDist(pts[r], pts[i]) < 15) r++;
+				if (r >= pts.length) continue;
+				var dy = pts[r].y - pts[i].y;
+				var dx = pts[r].x - pts[i].x;
+				var grad2 = dy/dx;
 
-			if (Math.abs(grad1) > 0.03 && Math.abs(grad2) > 0.03) {
-				maxima.push(createPoint(pts[i].x, pts[i].y));
+				if (Math.abs(grad1) > 0.03 && Math.abs(grad2) > 0.03) {
+					if ((pts[i].x > pts[i-1].x && grad1 < 0 && grad2 > 0) || (pts[i].x < pts[i-1].x && grad1 > 0 && grad2 < 0)) {
+						maxima.push(createPoint(pts[i].x, pts[i].y));
+					} 
+				}
 			}
 		}
 	}
@@ -123,28 +124,28 @@ function findMinima(pts) {
 	}
 
 	for (var i = 1; i < grad.length; i++) {
-		if (grad[i-1] != NaN && grad[i] != NaN && grad[i-1] > 0 && grad[i] < 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
-			// if (Math.abs(grad[i-1] - grad[i]) > 0.015)
-			// if (Math.abs(grad[i-1]) > 0.005 && Math.abs([grad[i]]) > 0.005) 
+		if (grad[i-1] != NaN && grad[i] != NaN) {
+			if (grad[i] * grad[i-1] < 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
 
-			var l = i-1;
-			while (l >= 0 && getDist(pts[l], pts[i]) < 15) l--;
-			if (l < 0) continue;
-			var dy = pts[i].y - pts[l].y;
-			var dx = pts[i].x - pts[l].x;
-			var grad1 = dy/dx;
+				var l = i-1;
+				while (l >= 0 && getDist(pts[l], pts[i]) < 15) l--;
+				if (l < 0) continue;
+				var dy = pts[i].y - pts[l].y;
+				var dx = pts[i].x - pts[l].x;
+				var grad1 = dy/dx;
 
-			var r = i+1;
-			while (r < pts.length && getDist(pts[r], pts[i]) < 15) r++;
-			if (r >= pts.length) continue;
-			var dy = pts[r].y - pts[i].y;
-			var dx = pts[r].x - pts[i].x;
-			var grad2 = dy/dx;
+				var r = i+1;
+				while (r < pts.length && getDist(pts[r], pts[i]) < 15) r++;
+				if (r >= pts.length) continue;
+				var dy = pts[r].y - pts[i].y;
+				var dx = pts[r].x - pts[i].x;
+				var grad2 = dy/dx;
 
-			
-
-			if (Math.abs(grad1) > 0.03 && Math.abs(grad2) > 0.03) {
-				minima.push(createPoint(pts[i].x, pts[i].y));
+				if (Math.abs(grad1) > 0.03 && Math.abs(grad2) > 0.03) {
+					if ((pts[i].x > pts[i-1].x && grad1 > 0 && grad2 < 0) || (pts[i].x < pts[i-1].x && grad1 < 0 && grad2 > 0)) {
+						minima.push(createPoint(pts[i].x, pts[i].y));
+					} 
+				}
 			}
 		}
 	}
