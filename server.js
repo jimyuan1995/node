@@ -31,7 +31,7 @@ app.get('/print_drawn', function(req, res) {
 	printer.print("/Users/YUAN/Desktop/nodejs/public/json/drawn.json", req.query.data);
 });	
 
-var server = app.listen(8888, function () {
-  console.log("NodeJS listening localhost:8888");
+var server = app.listen(8887, function () {
+  console.log("NodeJS listening localhost:8887");
 });
 
