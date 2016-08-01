@@ -515,7 +515,6 @@ function transCurve(curve, dx, dy) {
 
 function mousePressed() {
 	var current = createPoint(mouseX, mouseY);
-	mousePressedPt = current;
 	isMouseDragged = false;
 	action = undefined;
 	movedSymbol = undefined;
