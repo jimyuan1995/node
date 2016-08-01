@@ -131,7 +131,10 @@ function drawButton() {
 	buttonClear.position(600, upper);
 	buttonClear.mousePressed(function() {
 		curves = [];
+		
 		clickedKnot = null;
+		asymptoteX = [];
+		asymptoteY = [];
 
 		checkPointsUndo = [];
 		checkPointsRedo = [];

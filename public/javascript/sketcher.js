@@ -32,15 +32,26 @@ var CURVE_COLORS = [[93,165,218], [250,164,58], [96,189,104], [241,124,176], [24
 	MOVE_SYMBOL_COLOR = [151],
 	KNOT_DETECT_COLOR = [151];
 
+var	curves = [];
+
+var freeSymbols = [];
+
+var clickedKnot = null;
+
+var asymptoteX = [],
+	asymptoteY = [];
+
+// for redo and undo
+var checkPoint,
+	checkPointsUndo = [],
+	checkPointsRedo = [];
+
 // action recorder
 var action = undefined,
 	isMouseDragged;
 
-var freeSymbols;
-
-// point collection
+// for drawing
 var drawnPts = [],
-	curves = [];
 
 // for moving curve
 var prevMousePt,
@@ -50,14 +61,6 @@ var prevMousePt,
 var movedSymbol,
 	bindedKnot,
 	symbolType;
-
-var clickedKnot = null;
-
-// for redo and undo
-var checkPoint,
-	checkPointsUndo = [],
-	checkPointsRedo = [];
-
 
 
 // run in the beginning by p5 library
@@ -196,7 +199,7 @@ function drawBackground() {
 
 	clear();
 	background(255);
-	drawGrid();
+	// drawGrid();
 	drawHorizontalAxis();
 	drawVerticalAxis();
 	drawLabel();
@@ -394,8 +397,19 @@ function drawHorizontalDotLine(y, begin, end) {
 	pop();
 }
 
+function drawAsymptotes() {
+	for (var i = 0; i < asymptoteX.length; i++) {
+		drawVerticalDotLine(asymptoteX[i], 0, canvasHeight);
+	}
+
+	for (var i = 0; i < asymptoteY.length; i++) {
+		drawHorizontalDotLine(asymptoteY[i], 0, canvasWidth);
+	}
+}
+
 function reDraw() {
 	drawBackground();
+	drawAsymptotes();
 	drawCurves(curves);
 	refreshFreeSymbols();
 	drawSymbols(freeSymbols);
@@ -515,19 +529,29 @@ function transCurve(curve, dx, dy) {
 
 function mousePressed() {
 	var current = createPoint(mouseX, mouseY);
-	mousePressedPt = current;
+	
 	isMouseDragged = false;
 	action = undefined;
+
+	drawnPts = [];
+
+	prevMousePt = undefined;
+	movedCurveIdx = undefined;
+
 	movedSymbol = undefined;
 	bindedKnot = undefined;
 	symbolType = undefined;
-	drawnPts = [];
 
-	if (current.x < 0 || current.x > canvasWidth || current.y < 0 || current.y > canvasHeight) return;
+	
+	if (current.x < 0 || current.x > canvasWidth || current.y < 0 || current.y > canvasHeight) {
+		return;
+	}
 	
 	checkPoint = {};
 	checkPoint.freeSymbolsJSON = JSON.stringify(freeSymbols);
 	checkPoint.curvesJSON = JSON.stringify(curves);
+	checkPoint.asymptoteXJSON = JSON.stringify(asymptoteX);
+	checkPoint.asymptoteYJSON = JSON.stringify(asymptoteY);
 
 	for (var i = 0; i < freeSymbols.length; i++) {
 		if (getDist(current, freeSymbols[i]) < MOUSE_DETECT_RADIUS) {
@@ -875,8 +899,11 @@ function mouseReleased() {
 }
 
 function mouseClicked() {
+	if (isMouseDragged) {
+		return;
+	}
+
 	var current = createPoint(mouseX, mouseY);
-	if (isMouseDragged) return;
 
 	if (action  == "MOVE_SYMBOL") {
 		if (bindedKnot == undefined) {
@@ -889,7 +916,9 @@ function mouseClicked() {
 		reDraw();
 	}
 
-	if (current.x < 0 || current.x > canvasWidth || current.y < 0 || current.y > canvasHeight) return;
+	if (current.x < 0 || current.x > canvasWidth || current.y < 0 || current.y > canvasHeight) {
+		return;
+	}
 
 	for (var i = 0; i < curves.length; i++) {
 		var maxima = curves[i].maxima;
@@ -919,6 +948,42 @@ function mouseClicked() {
 				return;
 			}
 		}
+	}
+
+	if (Math.abs(current.x - canvasWidth/2) < 5) {
+		if (Math.abs(current.y - canvasHeight/2) < 5) {
+			return;
+		}
+
+		for (var i = 0; i < asymptoteY.length; i++) {
+			if (Math.abs(current.y - asymptoteY[i]) < 5) {
+				asymptoteY.splice(i, 1);
+				reDraw();
+				return;
+			}
+		}
+
+		asymptoteY.push(current.y);
+		reDraw();
+		return;
+	}
+
+	if (Math.abs(current.y - canvasHeight/2) < 5) {
+		if (Math.abs(current.x - canvasWidth/2) < 5) {
+			return;
+		}
+
+		for (var i = 0; i < asymptoteX.length; i++) {
+			if (Math.abs(current.x - asymptoteX[i]) < 5) {
+				asymptoteX.splice(i, 1);
+				reDraw();
+				return;
+			}
+		}
+
+		asymptoteX.push(current.x);
+		reDraw();
+		return;
 	}
 
 	if (clickedKnot != null) {
