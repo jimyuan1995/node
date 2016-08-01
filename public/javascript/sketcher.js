@@ -842,16 +842,16 @@ function mouseReleased() {
 		checkPointsUndo.push(checkPoint);
 		checkPointsRedo = [];
 
-		if (Math.abs(drawnPts[0].y - canvasHeight/2) < 0.01 * canvasWidth) {
+		if (Math.abs(drawnPts[0].y - canvasHeight/2) < 5) {
 			drawnPts[0].y = canvasHeight/2;
 		}
-		if (Math.abs(drawnPts[0].x - canvasWidth/2) < 0.01 * canvasWidth) {
+		if (Math.abs(drawnPts[0].x - canvasWidth/2) < 5) {
 			drawnPts[0].x = canvasWidth/2;
 		}
-		if (Math.abs(drawnPts[drawnPts.length - 1].y - canvasHeight/2) < 0.01 * canvasWidth) {
+		if (Math.abs(drawnPts[drawnPts.length - 1].y - canvasHeight/2) < 5) {
 			drawnPts[drawnPts.length - 1].y = canvasHeight/2;
 		}
-		if (Math.abs(drawnPts[drawnPts.length - 1].x - canvasWidth/2) < 0.01 * canvasWidth) {
+		if (Math.abs(drawnPts[drawnPts.length - 1].x - canvasWidth/2) < 5) {
 			drawnPts[drawnPts.length - 1].x = canvasWidth/2;
 		}
 

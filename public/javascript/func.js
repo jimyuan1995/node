@@ -17,6 +17,8 @@
 // offer support for front-end and back-end. 
 // auxiliary functions used in both sides.
 
+var DIST_THRESHOLD = 0.025 * canvasWidth;
+
 function getDist(pt1, pt2) {
 	return Math.sqrt(Math.pow(pt1.x - pt2.x, 2) + Math.pow(pt1.y - pt2.y, 2));
 }
@@ -86,14 +88,14 @@ function findMaxima(pts) {
 			if (grad[i] * grad[i-1] < 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
 
 				var l = i-1;
-				while (l >= 0 && getDist(pts[l], pts[i]) < 15) l--;
+				while (l >= 0 && getDist(pts[l], pts[i]) < DIST_THRESHOLD) l--;
 				if (l < 0) continue;
 				var dy = pts[i].y - pts[l].y;
 				var dx = pts[i].x - pts[l].x;
 				var grad1 = dy/dx;
 
 				var r = i+1;
-				while (r < pts.length && getDist(pts[r], pts[i]) < 15) r++;
+				while (r < pts.length && getDist(pts[r], pts[i]) < DIST_THRESHOLD) r++;
 				if (r >= pts.length) continue;
 				var dy = pts[r].y - pts[i].y;
 				var dx = pts[r].x - pts[i].x;
@@ -128,14 +130,14 @@ function findMinima(pts) {
 			if (grad[i] * grad[i-1] < 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
 
 				var l = i-1;
-				while (l >= 0 && getDist(pts[l], pts[i]) < 15) l--;
+				while (l >= 0 && getDist(pts[l], pts[i]) < DIST_THRESHOLD) l--;
 				if (l < 0) continue;
 				var dy = pts[i].y - pts[l].y;
 				var dx = pts[i].x - pts[l].x;
 				var grad1 = dy/dx;
 
 				var r = i+1;
-				while (r < pts.length && getDist(pts[r], pts[i]) < 15) r++;
+				while (r < pts.length && getDist(pts[r], pts[i]) < DIST_THRESHOLD) r++;
 				if (r >= pts.length) continue;
 				var dy = pts[r].y - pts[i].y;
 				var dx = pts[r].x - pts[i].x;

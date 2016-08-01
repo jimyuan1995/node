@@ -17,7 +17,7 @@
 
 // Given a set of data points, generate bezier curve.
 
-var numOfPts = 100;
+var NUM_OF_PTS = 100;
 
 function genericBezier(pts) {
 
@@ -27,10 +27,10 @@ function genericBezier(pts) {
 		comb.push(math.combinations(n, r));
 	}
 
-	var step = 1 / numOfPts;
+	var step = 1 / NUM_OF_PTS;
 	var bezier = [];
 
-	for (var i = 0; i < numOfPts; i++) {
+	for (var i = 0; i < NUM_OF_PTS; i++) {
 		var u = i * step;
 		var sx = 0, sy = 0;
 		for (var r = 0; r <= n; r++) {
