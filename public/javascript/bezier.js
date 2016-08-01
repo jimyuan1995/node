@@ -17,20 +17,21 @@
 
 // Given a set of data points, generate bezier curve.
 
-var NUM_OF_PTS = 100;
+var numOfPts = 100;
 
 function genericBezier(pts) {
 
 	var n = pts.length - 1;
 	var comb = [];
 	for (var r = 0; r <= n; r++) {
+		// from the other math library!!!! not the same as Math!!!!
 		comb.push(math.combinations(n, r));
 	}
 
-	var step = 1 / NUM_OF_PTS;
+	var step = 1 / numOfPts;
 	var bezier = [];
 
-	for (var i = 0; i < NUM_OF_PTS; i++) {
+	for (var i = 0; i < numOfPts; i++) {
 		var u = i * step;
 		var sx = 0, sy = 0;
 		for (var r = 0; r <= n; r++) {
@@ -40,6 +41,7 @@ function genericBezier(pts) {
 			sx += tmp3 * pts[r].x;
 			sy += tmp3 * pts[r].y;
 		}
+		// createPoint from point.js
 		bezier.push(createPoint(sx, sy));
 	}
 	bezier.push(pts[pts.length - 1]);

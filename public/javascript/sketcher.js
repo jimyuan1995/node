@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-
+// func.getDist();
 
 // canvas coefficients
 var canvasHeight = 600,
-	canvasWidth = 600,
-	GRID_WIDTH = 50,
+	canvasWidth = 600;
+
+var GRID_WIDTH = 50,
 	CURVE_STRKWEIGHT = 1.5,
 	PADDING = 0.025 * canvasWidth,
 	DOT_LINE_STEP = 5,
@@ -36,11 +37,11 @@ var CURVE_COLORS = [[93,165,218], [250,164,58], [96,189,104], [241,124,176], [24
 var action = undefined,
 	isMouseDragged;
 
-var freeSymbols;
-
-// point collection
-var drawnPts = [],
+var freeSymbols = [],
 	curves = [];
+
+// for drawing curve
+var drawnPts = [];
 
 // for moving curve
 var prevMousePt,
@@ -59,13 +60,22 @@ var checkPoint,
 	checkPointsRedo = [];
 
 
+function initiateFreeSymbols() {
+	freeSymbols = [];
+	freeSymbols.push(createSymbol('A'));
+	freeSymbols.push(createSymbol('B'));
+	freeSymbols.push(createSymbol('C'));
+}
 
 // run in the beginning by p5 library
 function setup() {
+	// p5.createCanvas
 	createCanvas(canvasWidth, canvasHeight).position(50,50);
 
 	noLoop();
 	cursor(CROSS);
+
+	initiateFreeSymbols();
 
 	reDraw();
 	drawButton();
@@ -74,6 +84,7 @@ function setup() {
 function drawBackground() {
 
 	function drawHorizontalAxis() {
+		// p5.strokeWeight, p5.strokeJoin, p5.ROUND, p5.stroke, p5.noFill, p5.beginShape, p5.vertex, p5.endShape, p5.push, p5.pop
 		push();
 		
 		strokeWeight(CURVE_STRKWEIGHT);
@@ -96,6 +107,8 @@ function drawBackground() {
 	}
 
 	function drawVerticalAxis() {
+		// p5.strokeWeight, p5.strokeJoin, p5.ROUND, p5.stroke, p5.noFill, p5.beginShape, p5.vertex, p5.endShape, p5.push, p5.pop
+
 		push();
 		
 		strokeWeight(CURVE_STRKWEIGHT);
@@ -118,6 +131,7 @@ function drawBackground() {
 	}
 
 	function drawGrid() {
+		// p5.strokeWeight, p5.strokeJoin, p5.ROUND, p5.stroke, p5.translate, p5.line, p5.push, p5.pop
 		push();
 
 		noFill();
@@ -147,6 +161,7 @@ function drawBackground() {
 	}
 
 	function drawLabel() {
+		// p5.push, p5.textSize, p5.stroke, p5.strokeWeight, p5.fill, p5.text, p5.pop
 		push();
 
 		textSize(16);
@@ -194,6 +209,9 @@ function drawBackground() {
 	// 	pop();
 	// }
 
+
+
+	// p5.clear, p5.background
 	clear();
 	background(255);
 	drawGrid();
@@ -201,7 +219,6 @@ function drawBackground() {
 	drawVerticalAxis();
 	drawLabel();
 }
-
 
 // given a set of points, draw the corresponding curve.
 function drawCurve(curve, color) {
@@ -395,12 +412,157 @@ function drawHorizontalDotLine(y, begin, end) {
 }
 
 function reDraw() {
+
+	function refreshFreeSymbols() {
+		var start = 15, 
+			separation = 30;
+
+		for (var i = 0; i < freeSymbols.length; i++) {
+			var symbol = freeSymbols[i];
+			symbol.x = start + i * separation;
+			symbol.y = start;
+		}
+	}
+
 	drawBackground();
 	drawCurves(curves);
 	refreshFreeSymbols();
 	drawSymbols(freeSymbols);
 	drawKnot3(clickedKnot);
 }
+
+function findInterceptX(pts) {
+	if (pts.length == 0) return [];
+
+	var intercepts = [];
+
+	if (pts[0].y == canvasHeight/2) intercepts.push(pts[0]);
+	for (var i = 1; i < pts.length; i++) {
+		if (pts[i].y == canvasHeight/2) {
+			intercepts.push(createPoint(pts[i].x, pts[i].y));
+			continue;
+		}
+
+		if ((pts[i-1].y - canvasHeight/2) * (pts[i].y - canvasHeight/2) < 0) {
+			var dx = pts[i].x - pts[i-1].x;
+			var dy = pts[i].y - pts[i-1].y;
+			var grad = dy/dx;
+			var esti = pts[i-1].x + (1 / grad) * (canvasHeight/2 - pts[i-1].y);
+			intercepts.push(createPoint(esti, canvasHeight/2));
+		}
+	}
+
+	return intercepts;
+}
+
+function findInterceptY(pts) {
+	if (pts.length == 0) return [];
+
+	var intercepts = [];
+
+	if (pts[0].x == canvasWidth/2) intercepts.push(pts[0]);
+	for (var i = 1; i < pts.length; i++) {
+		if (pts[i].x == canvasWidth/2) {
+			intercepts.push(createPoint(pts[i].x, pts[i].y));
+			continue;
+		}
+
+		if ((pts[i-1].x - canvasWidth/2) * (pts[i].x - canvasWidth/2) < 0) {
+			var dx = pts[i].x - pts[i-1].x;
+			var dy = pts[i].y - pts[i-1].y;
+			var grad = dy/dx;
+			var esti = pts[i-1].y + grad * (canvasWidth/2 - pts[i-1].x);
+			intercepts.push(createPoint(canvasWidth/2, esti));
+		}
+	}
+
+	return intercepts;
+}
+
+function findMaxima(pts) {
+	if (pts.length == 0) return [];
+
+	var maxima = [];
+
+	var grad = [];
+	for (var i = 0; i < pts.length - 1; i++) {
+		var dx = pts[i+1].x - pts[i].x;
+		var dy = pts[i+1].y - pts[i].y;
+		grad.push(dy/dx);
+	}
+
+	for (var i = 1; i < grad.length; i++) {
+		if (grad[i-1] != NaN && grad[i] != NaN) {
+			if (grad[i] * grad[i-1] < 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
+
+				var l = i-1;
+				while (l >= 0 && getDist(pts[l], pts[i]) < 15) l--;
+				if (l < 0) continue;
+				var dy = pts[i].y - pts[l].y;
+				var dx = pts[i].x - pts[l].x;
+				var grad1 = dy/dx;
+
+				var r = i+1;
+				while (r < pts.length && getDist(pts[r], pts[i]) < 15) r++;
+				if (r >= pts.length) continue;
+				var dy = pts[r].y - pts[i].y;
+				var dx = pts[r].x - pts[i].x;
+				var grad2 = dy/dx;
+
+				if (Math.abs(grad1) > 0.03 && Math.abs(grad2) > 0.03) {
+					if ((pts[i].x > pts[i-1].x && grad1 < 0 && grad2 > 0) || (pts[i].x < pts[i-1].x && grad1 > 0 && grad2 < 0)) {
+						maxima.push(createPoint(pts[i].x, pts[i].y));
+					} 
+				}
+			}
+		}
+	}
+
+	return maxima;
+}
+
+function findMinima(pts) {
+	if (pts.length == 0) return [];
+
+	var minima = [];
+
+	var grad = [];
+	for (var i = 0; i < pts.length - 1; i++) {
+		var dx = pts[i+1].x - pts[i].x;
+		var dy = pts[i+1].y - pts[i].y;
+		grad.push(dy/dx);
+	}
+
+	for (var i = 1; i < grad.length; i++) {
+		if (grad[i-1] != NaN && grad[i] != NaN) {
+			if (grad[i] * grad[i-1] < 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
+
+				var l = i-1;
+				while (l >= 0 && getDist(pts[l], pts[i]) < 15) l--;
+				if (l < 0) continue;
+				var dy = pts[i].y - pts[l].y;
+				var dx = pts[i].x - pts[l].x;
+				var grad1 = dy/dx;
+
+				var r = i+1;
+				while (r < pts.length && getDist(pts[r], pts[i]) < 15) r++;
+				if (r >= pts.length) continue;
+				var dy = pts[r].y - pts[i].y;
+				var dx = pts[r].x - pts[i].x;
+				var grad2 = dy/dx;
+
+				if (Math.abs(grad1) > 0.03 && Math.abs(grad2) > 0.03) {
+					if ((pts[i].x > pts[i-1].x && grad1 > 0 && grad2 < 0) || (pts[i].x < pts[i-1].x && grad1 < 0 && grad2 > 0)) {
+						minima.push(createPoint(pts[i].x, pts[i].y));
+					} 
+				}
+			}
+		}
+	}
+
+	return minima;
+}
+
 
 // given a curve, translate the curve
 function transCurve(curve, dx, dy) {
@@ -517,10 +679,15 @@ function mousePressed() {
 	var current = createPoint(mouseX, mouseY);
 	isMouseDragged = false;
 	action = undefined;
+
 	movedSymbol = undefined;
 	bindedKnot = undefined;
 	symbolType = undefined;
+
 	drawnPts = [];
+
+	movedCurveIdx = undefined;
+	prevMousePt = undefined;
 
 	if (current.x < 0 || current.x > canvasWidth || current.y < 0 || current.y > canvasHeight) return;
 	
@@ -854,7 +1021,8 @@ function mouseReleased() {
 			drawnPts[drawnPts.length - 1].x = canvasWidth/2;
 		}
 
-	
+		// sampler.sample, bezier.genericBezier
+
 		var pts = genericBezier(sample(drawnPts));
 		var curve = {};
 		curve.pts = pts;
@@ -874,8 +1042,9 @@ function mouseReleased() {
 }
 
 function mouseClicked() {
-	var current = createPoint(mouseX, mouseY);
-	if (isMouseDragged) return;
+	if (isMouseDragged) {
+		return;
+	}
 
 	if (action  == "MOVE_SYMBOL") {
 		if (bindedKnot == undefined) {
@@ -888,7 +1057,11 @@ function mouseClicked() {
 		reDraw();
 	}
 
-	if (current.x < 0 || current.x > canvasWidth || current.y < 0 || current.y > canvasHeight) return;
+	var current = createPoint(mouseX, mouseY);
+
+	if (current.x < 0 || current.x > canvasWidth || current.y < 0 || current.y > canvasHeight) {
+		return;
+	}
 
 	for (var i = 0; i < curves.length; i++) {
 		var maxima = curves[i].maxima;
@@ -927,8 +1100,355 @@ function mouseClicked() {
 
 }
 
+function clone(obj) {
+	var json = JSON.stringify(obj);
+	return JSON.parse(json);
+}
+
+function encodeData() {
+
+	if (canvasWidth > 5000 || canvasWidth <= 0) {
+		alert("Invalid canvasWidth.");
+		return;
+	}
+
+	if (canvasHeight > 5000 || canvasHeight <= 0) {
+		alert("Invalid canvasHeight.");
+		return;
+	}
+
+	var data = {};
+	data.descriptor = "";
+
+	data.canvasWidth = canvasWidth;
+	data.canvasHeight = canvasHeight;
+
+	
+	var clonedCurves = clone(curves);
+	
+	// sort segments according to their left most points.
+	function compare(curve1, curve2) {
+		function findMinX(pts) {
+			if (pts.length == 0) return 0;
+			var min = canvasWidth;
+			for (var i = 0; i < pts.length; i++) 
+				min = Math.min(min, pts[i].x);
+			return min;
+		}
+
+		var min1 = findMinX(curve1.pts);
+		var min2 = findMinX(curve2.pts);
+		if (min1 < min2) return -1
+		else if (min1 == min2) return 0
+		else return 1;
+	}
+	clonedCurves.sort(compare);
 
 
+	for (var i = 0; i < clonedCurves.length; i++) {
+		var pts = clonedCurves[i].pts;
+		for (var j = 0; j < pts.length; j++) {
+			pts[j].x = (pts[j].x - canvasWidth/2) / canvasWidth;
+			pts[j].y = (canvasHeight/2 - pts[j].y) / canvasHeight;
+		}
+
+		var interX = clonedCurves[i].interX;
+		for (var j = 0; j < interX.length; j++) {
+			var knot = interX[j];
+			knot.x = (knot.x - canvasWidth/2) / canvasWidth;
+			knot.y = (canvasHeight/2 - knot.y) / canvasHeight;
+			if (knot.symbol != undefined) {
+				var symbol = knot.symbol;
+				symbol.x = (symbol.x - canvasWidth/2) / canvasWidth;
+				symbol.y = (canvasHeight/2 - symbol.y) / canvasHeight;
+			}
+		}
+
+		var interY = clonedCurves[i].interY;
+		for (var j = 0; j < interY.length; j++) {
+			var knot = interY[j];
+			knot.x = (knot.x - canvasWidth/2) / canvasWidth;
+			knot.y = (canvasHeight/2 - knot.y) / canvasHeight;
+			if (knot.symbol != undefined) {
+				var symbol = knot.symbol;
+				symbol.x = (symbol.x - canvasWidth/2) / canvasWidth;
+				symbol.y = (canvasHeight/2 - symbol.y) / canvasHeight;
+			}
+		}
+
+		var maxima = clonedCurves[i].maxima;
+		for (var j = 0; j < maxima.length; j++) {
+			var knot = maxima[j];
+			knot.x = (knot.x - canvasWidth/2) / canvasWidth;
+			knot.y = (canvasHeight/2 - knot.y) / canvasHeight;
+			if (knot.symbol != undefined) {
+				var symbol = knot.symbol;
+				symbol.x = (symbol.x - canvasWidth/2) / canvasWidth;
+				symbol.y = (canvasHeight/2 - symbol.y) / canvasHeight;
+			}
+		}
+
+		var minima = clonedCurves[i].minima;
+		for (var j = 0; j < minima.length; j++) {
+			var knot = minima[j];
+			knot.x = (knot.x - canvasWidth/2) / canvasWidth;
+			knot.y = (canvasHeight/2 - knot.y) / canvasHeight;
+			if (knot.symbol != undefined) {
+				var symbol = knot.symbol;
+				symbol.x = (symbol.x - canvasWidth/2) / canvasWidth;
+				symbol.y = (canvasHeight/2 - symbol.y) / canvasHeight;
+			}
+		}
+	}
+
+	data.curves = clonedCurves;
+
+	var clonedFreeSymbols = clone(freeSymbols);
+	for (var i = 0; i < clonedFreeSymbols.length; i++) {
+		var symbol = clonedFreeSymbols[i];
+		symbol.x = (symbol.x - canvasWidth/2) / canvasWidth;
+		symbol.y = (canvasHeight/2 - symbol.y) / canvasHeight;
+	}
+	data.freeSymbols = clonedFreeSymbols;
+
+	return data;
+}
+
+function decodeData(data) {
+
+	var curves = data.curves;
+	for (var i = 0; i < curves.length; i++) {
+		var pts = curves[i].pts;
+		for (var j = 0; j < pts.length; j++) {
+			pts[j].x = pts[j].x * canvasWidth + canvasWidth/2;
+			pts[j].y = canvasHeight/2 - pts[j].y * canvasHeight;
+		}
+
+
+		// 4 duplicated codes
+
+		var interX = curves[i].interX;
+		for (var j = 0; j < interX.length; j++) {
+			var knot = interX[j];
+			knot.x = knot.x * canvasWidth + canvasWidth/2;
+			knot.y = canvasHeight/2 - knot.y * canvasHeight;
+			if (knot.symbol != undefined) {
+				var symbol = knot.symbol;
+				symbol.x = symbol.x * canvasWidth + canvasWidth/2;
+				symbol.y = canvasHeight/2 - symbol.y * canvasHeight;
+			}
+		}
+
+		var interY = curves[i].interY;
+		for (var j = 0; j < interY.length; j++) {
+			var knot = interY[j];
+			knot.x = knot.x * canvasWidth + canvasWidth/2;
+			knot.y = canvasHeight/2 - knot.y * canvasHeight;
+			if (knot.symbol != undefined) {
+				var symbol = knot.symbol;
+				symbol.x = symbol.x * canvasWidth + canvasWidth/2;
+				symbol.y = canvasHeight/2 - symbol.y * canvasHeight;
+			}
+		}
+
+
+		var maxima = curves[i].maxima;
+		for (var j = 0; j < maxima.length; j++) {
+			var knot = maxima[j];
+			knot.x = knot.x * canvasWidth + canvasWidth/2;
+			knot.y = canvasHeight/2 - knot.y * canvasHeight;
+			if (knot.symbol != undefined) {
+				var symbol = knot.symbol;
+				symbol.x = symbol.x * canvasWidth + canvasWidth/2;
+				symbol.y = canvasHeight/2 - symbol.y * canvasHeight;
+			}
+		}
+
+
+		var minima = curves[i].minima;
+		for (var j = 0; j < minima.length; j++) {
+			var knot = minima[j];
+			knot.x = knot.x * canvasWidth + canvasWidth/2;
+			knot.y = canvasHeight/2 - knot.y * canvasHeight;
+			if (knot.symbol != undefined) {
+				var symbol = knot.symbol;
+				symbol.x = symbol.x * canvasWidth + canvasWidth/2;
+				symbol.y = canvasHeight/2 - symbol.y * canvasHeight;
+			}
+		}
+	}
+
+	var freeSymbols = data.freeSymbols;
+	for (var j = 0; j < freeSymbols.length; j++) {
+		freeSymbols[j].x = freeSymbols[j].x * canvasWidth + canvasWidth/2;
+		freeSymbols[j].y = canvasHeight/2 - freeSymbols[j].y * canvasHeight;
+	}
+
+}
+
+
+function drawButton() {
+	var upper = 20;
+	var bottom = 680;
+
+	var buttonTest = createButton("test");
+	buttonTest.position(450, upper);
+	buttonTest.mousePressed(function() {
+		var params = 'data=' + JSON.stringify(encodeData()),
+		url = "http://localhost:5000/test",
+		xhr = new XMLHttpRequest();
+
+		xhr.open("POST", url, true);
+		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				var data = JSON.parse(xhr.responseText);
+				console.log(data);
+				alert(data['isCorrect'] + ": " + data['errCause']);
+			}
+		}
+		xhr.send(params);
+	});
+
+	var buttonTestcase = createButton("show test case");
+	buttonTestcase.position(50, bottom);
+	buttonTestcase.mousePressed(function () {
+		var url = '/json/test.json';
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", url, true);
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				var data = JSON.parse(xhr.responseText);
+				decodeData(data);
+
+				var freeSymbols = data.freeSymbols;
+				var curves = data.curves;
+
+				drawCurves(curves);
+				drawSymbols(freeSymbols);
+			}
+		}
+		xhr.send();
+	});
+
+	var buttonDrawnCase = createButton("show drawn case");
+	buttonDrawnCase.position(150, bottom);
+	buttonDrawnCase.mousePressed(function () {
+		var url = '/json/drawn.json';
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", url, true);
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				var data = JSON.parse(xhr.responseText);
+				decodeData(data);
+
+				var freeSymbols = data.freeSymbols;
+				var curves = data.curves;
+
+				drawCurves(curves);
+				drawSymbols(freeSymbols);
+			}
+		}
+		xhr.send();
+	});
+
+
+	var buttonShape = createButton("custom");
+	buttonShape.position(50, upper);
+	buttonShape.mousePressed( function() {
+		//
+	});
+
+
+	// redo and undo is essentially the reverse of each other.
+
+	var buttonUndo = createButton("undo");
+	buttonUndo.position(500, upper);
+	buttonUndo.mousePressed(function() {
+		if (checkPointsUndo.length == 0) {
+			return;
+		}
+
+		var checkPointRedo = {};
+		checkPointRedo.freeSymbolsJSON = JSON.stringify(freeSymbols);
+		checkPointRedo.curvesJSON = JSON.stringify(curves);
+		checkPointsRedo.push(checkPointRedo);
+
+		var checkPointUndo = checkPointsUndo.pop();
+		freeSymbols = JSON.parse(checkPointUndo.freeSymbolsJSON);
+		curves = JSON.parse(checkPointUndo.curvesJSON);
+		clickedKnot = null;
+		
+		reDraw();
+	});
+
+	var buttonRedo = createButton("redo");
+	buttonRedo.position(550, upper);
+	buttonRedo.mousePressed(function() {
+		if (checkPointsRedo.length == 0) {
+			return;
+		}
+
+		var checkPointUndo = {};
+		checkPointUndo.freeSymbolsJSON = JSON.stringify(freeSymbols);
+		checkPointUndo.curvesJSON = JSON.stringify(curves);
+		checkPointsUndo.push(checkPointUndo);
+
+		var checkPointRedo = checkPointsRedo.pop();
+		freeSymbols = JSON.parse(checkPointRedo.freeSymbolsJSON);
+		curves = JSON.parse(checkPointRedo.curvesJSON);
+		clickedKnot = null;
+		
+		reDraw();
+	});
+
+	var buttonClear = createButton('clear');
+	buttonClear.position(600, upper);
+	buttonClear.mousePressed(function() {
+		curves = [];
+		clickedKnot = null;
+
+		checkPointsUndo = [];
+		checkPointsRedo = [];
+
+		initiateFreeSymbols();
+		reDraw();
+	});
+
+	var buttonPrintTest = createButton("print test case");
+	buttonPrintTest.position(450, bottom);
+	buttonPrintTest.mousePressed(function() {
+		var data = encodeData();
+		var params = "data=" + JSON.stringify(data);
+
+		var url = '/print_test';
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", url + "?" + params, true);
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				alert(xhr.responseText);
+			}
+		}
+		xhr.send();
+	});
+
+	var buttonPrintDrawn = createButton("print drawn case");
+	buttonPrintDrawn.position(550, bottom);
+	buttonPrintDrawn.mousePressed(function() {
+		var data = encodeData();
+		var params = "data=" + JSON.stringify(data);
+
+		var url = '/print_drawn';
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", url + "?" + params, true);
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				alert(xhr.responseText);
+			}
+		}
+		xhr.send();
+	});
+}
 
 
 
