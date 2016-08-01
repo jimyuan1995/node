@@ -36,11 +36,11 @@ function refreshFreeSymbols() {
 	}
 }
 
-function restore() {
+function restoreFreeSymbols() {
 	freeSymbols = [];
 	freeSymbols.push(createSymbol('A'));
 	freeSymbols.push(createSymbol('B'));
 	freeSymbols.push(createSymbol('C'));
 }
 
-restore();
+restoreFreeSymbols();

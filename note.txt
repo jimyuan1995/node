@@ -1,0 +1,37 @@
+stay out of your comfort zone
+
+internet is my second university, 学会自学
+
+
+挑战自我
+1. 学习并不是一件很愉快的事情，但是是当前最重要的事情
+2. 快速掌握知识的能力，学习是终生的
+3. 从互联网学习的能力。 老师带进门，修行靠个人
+4. 
+
+
+
+
+
+1. Produce user interface for the sketcher, with one main drawing canvas and a few buttons for functionalities like redo, undo, clear, test.
+2. Implement global bezier to smooth user-drawn curves.
+3. Implement redo and undo functionality.
+4. Produce a tester that implements 4 kinds of tests to verify correctness of the graph, and it gives reasonable answer so far. (still need modification)
+5. Use node.js and express framework to build a server, where the tester runs. (Have thought about data structures used to store test cases).
+
+落地之后直接飞爱丁堡的可行性？还是坐卧铺火车？
+苏格兰4天行程，自驾？
+
+苏格兰 4天
+
+爱丁堡 1天 
+
+newcastle 1
+manchester 1
+London 3
+
+伦敦：大本钟附近，大英博物馆，帝国理工，lobster and burger，borough market 吃海鲜
+
+cambridge 2
+
+total 11days

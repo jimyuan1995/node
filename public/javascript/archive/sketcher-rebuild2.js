@@ -14,20 +14,30 @@
  * limitations under the License.
  */
 
-var action = undefined;
-var isMouseDragged;
 
-var freeSymbols;
 
 // canvas coefficients
 var canvasHeight = 600,
 	canvasWidth = 600,
-	gridWidth = 50,
-	strkWeight = 1.5,
-	padding = 15;
+	GRID_WIDTH = 50,
+	CURVE_STRKWEIGHT = 1.5,
+	PADDING = 0.025 * canvasWidth,
+	DOT_LINE_STEP = 5,
+	MOUSE_DETECT_RADIUS = 10;
 	
-var colors = [[93,165,218], [250,164,58], [96,189,104], [241,124,176], [241,88,84], [178,118,178]];
-	
+var CURVE_COLORS = [[93,165,218], [250,164,58], [96,189,104], [241,124,176], [241,88,84], [178,118,178]],
+	KNOT_COLOR = [77,77,77],
+	DOT_LINE_COLOR = [123],
+	MOVE_LINE_COLOR = [135],
+	MOVE_SYMBOL_COLOR = [151],
+	KNOT_DETECT_COLOR = [151];
+
+// action recorder
+var action = undefined,
+	isMouseDragged;
+
+var freeSymbols;
+
 // point collection
 var drawnPts = [],
 	curves = [];
@@ -43,6 +53,7 @@ var movedSymbol,
 
 var clickedKnot = null;
 
+// for redo and undo
 var checkPoint,
 	checkPointsUndo = [],
 	checkPointsRedo = [];
@@ -55,10 +66,8 @@ function setup() {
 
 	noLoop();
 	cursor(CROSS);
-	
-	drawBackground();
-	refreshFreeSymbols();
-	drawSymbols(freeSymbols);
+
+	reDraw();
 	drawButton();
 }
 
@@ -67,13 +76,13 @@ function drawBackground() {
 	function drawHorizontalAxis() {
 		push();
 		
-		strokeWeight(strkWeight);
+		strokeWeight(CURVE_STRKWEIGHT);
 		strokeJoin(ROUND);
 		stroke(0);
 		noFill();
 
-		var leftMargin = padding;
-		var rightMargin = canvasWidth - padding;
+		var leftMargin = PADDING;
+		var rightMargin = canvasWidth - PADDING;
 
 		beginShape();
 		vertex(leftMargin, canvasHeight/2);
@@ -89,13 +98,13 @@ function drawBackground() {
 	function drawVerticalAxis() {
 		push();
 		
-		strokeWeight(strkWeight);
+		strokeWeight(CURVE_STRKWEIGHT);
 		strokeJoin(ROUND);
 		stroke(0);
 		noFill();
 
-		var upMargin = padding;
-		var bottomMargin = canvasHeight - padding;
+		var upMargin = PADDING;
+		var bottomMargin = canvasHeight - PADDING;
 
 		beginShape();
 		vertex(canvasWidth/2, bottomMargin);
@@ -112,25 +121,25 @@ function drawBackground() {
 		push();
 
 		noFill();
-		strokeWeight(strkWeight);
+		strokeWeight(CURVE_STRKWEIGHT);
 		strokeJoin(ROUND);
 		stroke(215);
 
 		push();
 		translate(0, canvasHeight / 2);
-		var num = canvasHeight / (gridWidth * 2);
+		var num = canvasHeight / (GRID_WIDTH * 2);
 		for (var i = 0; i < num; i++) {
-			line(0, -i*gridWidth, canvasWidth, -i*gridWidth);
-			line(0, i*gridWidth, canvasWidth, i*gridWidth);
+			line(0, -i*GRID_WIDTH, canvasWidth, -i*GRID_WIDTH);
+			line(0, i*GRID_WIDTH, canvasWidth, i*GRID_WIDTH);
 		}
 		pop();
 
 		push();
 		translate(canvasWidth / 2, 0);
-		var num = canvasWidth / (gridWidth * 2);
+		var num = canvasWidth / (GRID_WIDTH * 2);
 		for (var i = 0; i < num; i++) {
-			line(-i*gridWidth, 0, -i*gridWidth, canvasHeight);
-			line(i*gridWidth, 0, i*gridWidth, canvasHeight);
+			line(-i*GRID_WIDTH, 0, -i*GRID_WIDTH, canvasHeight);
+			line(i*GRID_WIDTH, 0, i*GRID_WIDTH, canvasHeight);
 		}
 		pop();
 
@@ -152,38 +161,38 @@ function drawBackground() {
 		pop();
 	}
 
-	function drawScale() {
-		var len = 3;
+	// function drawScale() {
+	// 	var len = 3;
 
-		push();
-		strokeWeight(1);
-		stroke(0);
-		textSize(12);
+	// 	push();
+	// 	strokeWeight(1);
+	// 	stroke(0);
+	// 	textSize(12);
 
-		push();
-		translate(0, canvasHeight / 2);
-		var num = canvasHeight / (gridWidth * 2);
-		for (var i = 1; i < num; i++) {
-			line(canvasWidth/2 -len, -i*gridWidth, canvasWidth/2 + len, -i*gridWidth);
-			line(canvasWidth/2 - len, i*gridWidth, canvasWidth/2 + len, i*gridWidth);
-			text(i, canvasWidth/2 + 5, -i * gridWidth + 5);
-			text(-i, canvasWidth/2 + 5, i * gridWidth + 5);
-		}
-		pop();
+	// 	push();
+	// 	translate(0, canvasHeight / 2);
+	// 	var num = canvasHeight / (GRID_WIDTH * 2);
+	// 	for (var i = 1; i < num; i++) {
+	// 		line(canvasWidth/2 -len, -i*GRID_WIDTH, canvasWidth/2 + len, -i*GRID_WIDTH);
+	// 		line(canvasWidth/2 - len, i*GRID_WIDTH, canvasWidth/2 + len, i*GRID_WIDTH);
+	// 		text(i, canvasWidth/2 + 5, -i * GRID_WIDTH + 5);
+	// 		text(-i, canvasWidth/2 + 5, i * GRID_WIDTH + 5);
+	// 	}
+	// 	pop();
 
-		push();
-		translate(canvasWidth / 2, 0);
-		var num = canvasWidth / (gridWidth * 2);
-		for (var i = 1; i < num; i++) {
-			line(-i*gridWidth, canvasHeight/2 - len, -i*gridWidth, canvasHeight / 2 + len);
-			line(i*gridWidth, canvasHeight/2 - len, i*gridWidth, canvasHeight /2 + len);
-			text(-i, -i * gridWidth - 5, canvasHeight / 2 + 15);
-			text(i, i * gridWidth - 5, canvasHeight / 2 + 15);
-		}
-		pop();
+	// 	push();
+	// 	translate(canvasWidth / 2, 0);
+	// 	var num = canvasWidth / (GRID_WIDTH * 2);
+	// 	for (var i = 1; i < num; i++) {
+	// 		line(-i*GRID_WIDTH, canvasHeight/2 - len, -i*GRID_WIDTH, canvasHeight / 2 + len);
+	// 		line(i*GRID_WIDTH, canvasHeight/2 - len, i*GRID_WIDTH, canvasHeight /2 + len);
+	// 		text(-i, -i * GRID_WIDTH - 5, canvasHeight / 2 + 15);
+	// 		text(i, i * GRID_WIDTH - 5, canvasHeight / 2 + 15);
+	// 	}
+	// 	pop();
 
-		pop();
-	}
+	// 	pop();
+	// }
 
 	clear();
 	background(255);
@@ -196,12 +205,13 @@ function drawBackground() {
 
 // given a set of points, draw the corresponding curve.
 function drawCurve(curve, color) {
-	if (color == undefined) 
+	if (color == undefined) {
 		color = curve.color;
+	} 
 
 	push();
 	stroke(color);
-	strokeWeight(strkWeight);
+	strokeWeight(CURVE_STRKWEIGHT);
 
 	var pts = curve.pts;
 	for (var i = 1; i < pts.length; i++) {
@@ -228,8 +238,9 @@ function drawCurves(curves, color) {
 
 // given a set of points, draw the corresponding points (knots).
 function drawKnot(knot, color) {
-	if (color == undefined) 
-		color = [77,77,77];
+	if (color == undefined) {
+		color = KNOT_COLOR;
+	}
 
 	if (knot.symbol != undefined) {
 		drawSymbol(knot.symbol);
@@ -250,9 +261,7 @@ function drawKnots(knots, color) {
 	}	
 }
 
-function drawKnot2(knot, color) {
-	if (color == undefined) color = 123;
-
+function drawKnot2(knot) {
 	if (knot.xSymbol != undefined) {
 		drawVerticalDotLine(knot.x, knot.y, canvasHeight/2);
 		drawSymbol(knot.xSymbol);
@@ -264,15 +273,16 @@ function drawKnot2(knot, color) {
 	}
 }
 
-function drawKnots2(knots, color) {
+function drawKnots2(knots) {
 	for (var i = 0; i < knots.length; i++) {
-		drawKnot2(knots[i], color);
+		drawKnot2(knots[i]);
 	}	
 }
 
-function drawKnot3(knot, color) {
-	if (knot == null) return;
-	if (color == undefined) color = 123;
+function drawKnot3(knot) {
+	if (knot == null) {
+		return;
+	}
 
 	drawVerticalDotLine(knot.x, knot.y, canvasHeight/2);
 	drawHorizontalDotLine(knot.y, knot.x, canvasWidth/2);
@@ -292,7 +302,9 @@ function drawKnot3(knot, color) {
 
 // draw symbols, e.g. "A", "B".
 function drawSymbol(symbol, color) {
-	if (color == undefined) color = [77,77,77];
+	if (color == undefined) {
+		color = KNOT_COLOR;
+	}
 	
 	push();
 	
@@ -317,9 +329,10 @@ function drawSymbols(symbols, color) {
 	}
 }
 
-function drawVerticalDotLine(x, begin, end, color) {
-	if (x < 0 || x > canvasWidth) return;
-	if (color == undefined) color = 123;
+function drawVerticalDotLine(x, begin, end) {
+	if (x < 0 || x > canvasWidth) {
+		return;
+	}
 
 	if (begin > end) {
 		var tmp = begin;
@@ -328,10 +341,10 @@ function drawVerticalDotLine(x, begin, end, color) {
 	}
 
 	push();
-	stroke(color);
-	strokeWeight(1.5);
+	stroke(DOT_LINE_COLOR);
+	strokeWeight(CURVE_STRKWEIGHT);
 
-	var step = 5;
+	var step = DOT_LINE_STEP;
 	var toDraw = true;
 	var y = begin;
 	while (y + step < end) {
@@ -346,10 +359,10 @@ function drawVerticalDotLine(x, begin, end, color) {
 	pop();
 }
 
-function drawHorizontalDotLine(y, begin, end, color) {
-	if (y < 0 || y > canvasHeight) return;
-
-	if (color == undefined) color = 123;
+function drawHorizontalDotLine(y, begin, end) {
+	if (y < 0 || y > canvasHeight) {
+		return;
+	}
 
 	if (begin > end) {
 		var tmp = begin;
@@ -358,10 +371,10 @@ function drawHorizontalDotLine(y, begin, end, color) {
 	}
 
 	push();
-	stroke(color);
-	strokeWeight(1.5);
+	stroke(DOT_LINE_COLOR);
+	strokeWeight(CURVE_STRKWEIGHT);
 
-	var step = 5;
+	var step = DOT_LINE_STEP;
 	var toDraw = true;
 	var x = begin;
 	while (x + step < end) {
@@ -376,7 +389,13 @@ function drawHorizontalDotLine(y, begin, end, color) {
 	pop();
 }
 
-
+function reDraw() {
+	drawBackground();
+	drawCurves(curves);
+	refreshFreeSymbols();
+	drawSymbols(freeSymbols);
+	drawKnot3(clickedKnot);
+}
 
 // given a curve, translate the curve
 function transCurve(curve, dx, dy) {
@@ -484,7 +503,6 @@ function transCurve(curve, dx, dy) {
 	}
 	curve.interY = newInterY;
 
-	refreshFreeSymbols();
 	return;
 }
 
@@ -507,7 +525,7 @@ function mousePressed() {
 	checkPoint.curvesJSON = JSON.stringify(curves);
 
 	for (var i = 0; i < freeSymbols.length; i++) {
-		if (getDist(current, freeSymbols[i]) < 10) {
+		if (getDist(current, freeSymbols[i]) < MOUSE_DETECT_RADIUS) {
 			movedSymbol = freeSymbols[i];
 			freeSymbols.splice(i, 1);
 			action = "MOVE_SYMBOL";
@@ -518,7 +536,7 @@ function mousePressed() {
 	for (var i = 0; i < curves.length; i++) {
 		var interX = curves[i]['interX'];
 		for (var j = 0; j < interX.length; j++) {
-			if (interX[j].symbol != undefined && getDist(current, interX[j]) < 10) {
+			if (interX[j].symbol != undefined && getDist(current, interX[j]) < MOUSE_DETECT_RADIUS) {
 				movedSymbol = interX[j].symbol;
 				interX[j].symbol = undefined;
 				bindedKnot = knot;
@@ -530,7 +548,7 @@ function mousePressed() {
 
 		var interY = curves[i]['interY'];
 		for (var j = 0; j < interY.length; j++) {
-			if (interY[j].symbol != undefined && getDist(current, interY[j]) < 10) {
+			if (interY[j].symbol != undefined && getDist(current, interY[j]) < MOUSE_DETECT_RADIUS) {
 				movedSymbol = interY[j].symbol;
 				interY[j].symbol = undefined;
 				bindedKnot = knot;
@@ -544,7 +562,7 @@ function mousePressed() {
 		for (var j = 0; j < maxima.length; j++) {
 			var knot = maxima[j];
 
-			if (knot.symbol != undefined && getDist(current, knot.symbol) < 10) {
+			if (knot.symbol != undefined && getDist(current, knot.symbol) < MOUSE_DETECT_RADIUS) {
 				movedSymbol = knot.symbol;
 				knot.symbol = undefined;
 				bindedKnot = knot;
@@ -553,7 +571,7 @@ function mousePressed() {
 				return;
 			}
 
-			if (knot.xSymbol != undefined && getDist(current, knot.xSymbol) < 10) {
+			if (knot.xSymbol != undefined && getDist(current, knot.xSymbol) < MOUSE_DETECT_RADIUS) {
 				movedSymbol = knot.xSymbol;
 				knot.xSymbol = undefined;
 				bindedKnot = knot;
@@ -562,7 +580,7 @@ function mousePressed() {
 				return;
 			}
 
-			if (knot.ySymbol != undefined && getDist(current, knot.ySymbol) < 10) {
+			if (knot.ySymbol != undefined && getDist(current, knot.ySymbol) < MOUSE_DETECT_RADIUS) {
 				movedSymbol = knot.ySymbol;
 				knot.ySymbol = undefined;
 				bindedKnot = knot;
@@ -577,7 +595,7 @@ function mousePressed() {
 		for (var j = 0; j < minima.length; j++) {
 			var knot = minima[j];
 
-			if (knot.symbol != undefined && getDist(current, knot) < 10) {
+			if (knot.symbol != undefined && getDist(current, knot) < MOUSE_DETECT_RADIUS) {
 				movedSymbol = knot.symbol;
 				knot.symbol = undefined;
 				bindedKnot = knot;
@@ -586,7 +604,7 @@ function mousePressed() {
 				return;
 			}
 
-			if (knot.xSymbol != undefined && getDist(current, knot.xSymbol) < 10) {
+			if (knot.xSymbol != undefined && getDist(current, knot.xSymbol) < MOUSE_DETECT_RADIUS) {
 				movedSymbol = knot.xSymbol;
 				knot.xSymbol = undefined;
 				bindedKnot = knot;
@@ -595,7 +613,7 @@ function mousePressed() {
 				return;
 			}
 
-			if (knot.ySymbol != undefined && getDist(current, knot.ySymbol) < 10) {
+			if (knot.ySymbol != undefined && getDist(current, knot.ySymbol) < MOUSE_DETECT_RADIUS) {
 				movedSymbol = knot.ySymbol;
 				knot.ySymbol = undefined;
 				bindedKnot = knot;
@@ -612,17 +630,17 @@ function mousePressed() {
 	for (var i = 0; i < curves.length; i++) {
 		var pts = curves[i].pts;
 		for (var j = 0; j < pts.length; j++) {
-			if (getDist(pts[j], current) < 10) {
+			if (getDist(pts[j], current) < MOUSE_DETECT_RADIUS) {
 				movedCurveIdx = i;
 				action = "MOVE_CURVE";
 				prevMousePt = current;
-				drawCurve(curves[i], [135]);
+				drawCurve(curves[i], MOVE_LINE_COLOR);
 				return;
 			}
 		}
 	}
 
-	if (curves.length < colors.length) {
+	if (curves.length < CURVE_COLORS.length) {
 		action = "DRAW_CURVE";
 	} else {
 		alert("Too much lines being drawn.");
@@ -641,42 +659,29 @@ function mouseDragged() {
 		transCurve(curves[movedCurveIdx], dx, dy);
 		prevMousePt = current;
 
-		drawBackground();
-		for (var i = 0; i < curves.length; i++) {
-			if (i == movedCurveIdx) {
-				drawCurve(curves[i], 135);
-			} else {
-				drawCurve(curves[i]);
-			}
-		}
-		drawSymbols(freeSymbols);
-		drawKnot3(clickedKnot);
-
+		reDraw();
+		drawCurve(curves[movedCurveIdx], MOVE_LINE_COLOR);
 
 	} else if (action == "MOVE_SYMBOL") {
 		movedSymbol.x = current.x;
 		movedSymbol.y = current.y;
 
-		drawBackground();
-		drawCurves(curves);
-		drawSymbols(freeSymbols);
-		drawSymbol(movedSymbol, 151);
-		drawKnot3(clickedKnot);
-
+		reDraw();
+		drawSymbol(movedSymbol, MOVE_SYMBOL_COLOR);
 
 		for (var i = 0; i < curves.length; i++) {
 			var interX = curves[i]['interX'];
 			for (var j = 0; j < interX.length; j++) {
-				if (interX[j].symbol == undefined && getDist(current, interX[j]) < 10) {
-					drawKnot(interX[j], 151);
+				if (interX[j].symbol == undefined && getDist(current, interX[j]) < MOUSE_DETECT_RADIUS) {
+					drawKnot(interX[j], KNOT_DETECT_COLOR);
 					return;
 				}
 			}
 
 			var interY = curves[i]['interY'];
 			for (var j = 0; j < interY.length; j++) {
-				if (interY[j].symbol == undefined && getDist(current, interY[j]) < 10) {
-					drawKnot(interY[j], 151);
+				if (interY[j].symbol == undefined && getDist(current, interY[j]) < MOUSE_DETECT_RADIUS) {
+					drawKnot(interY[j], KNOT_DETECT_COLOR);
 					return;
 				}
 			}
@@ -684,8 +689,8 @@ function mouseDragged() {
 			var maxima = curves[i]['maxima'];
 			for (var j = 0; j < maxima.length; j++) {
 				var knot = maxima[j];
-				if (knot.symbol == undefined && getDist(current, knot) < 10) {
-					drawKnot(knot, 151);
+				if (knot.symbol == undefined && getDist(current, knot) < MOUSE_DETECT_RADIUS) {
+					drawKnot(knot, KNOT_DETECT_COLOR);
 					return;
 				}
 			}
@@ -693,8 +698,8 @@ function mouseDragged() {
 			var minima = curves[i]['minima'];
 			for (var j = 0; j < minima.length; j++) {
 				var knot = minima[j];
-				if (knot.symbol == undefined && getDist(current, knot) < 10) {
-					drawKnot(knot, 151);
+				if (knot.symbol == undefined && getDist(current, knot) < MOUSE_DETECT_RADIUS) {
+					drawKnot(knot, KNOT_DETECT_COLOR);
 					return;
 				}
 			}
@@ -703,13 +708,13 @@ function mouseDragged() {
 		if (clickedKnot != null) {
 			var knot = clickedKnot;
 			
-			if (knot.xSymbol == undefined && getDist(current, createPoint(knot.x, canvasHeight/2)) < 10) {
-				drawKnot(createPoint(knot.x, canvasHeight/2), 151);
+			if (knot.xSymbol == undefined && getDist(current, createPoint(knot.x, canvasHeight/2)) < MOUSE_DETECT_RADIUS) {
+				drawKnot(createPoint(knot.x, canvasHeight/2), KNOT_DETECT_COLOR);
 				return;
 			}
 
-			if (knot.ySymbol == undefined && getDist(current, createPoint(canvasWidth/2, knot.y)) < 10) {
-				drawKnot(createPoint(canvasWidth/2, knot.y), 151);
+			if (knot.ySymbol == undefined && getDist(current, createPoint(canvasWidth/2, knot.y)) < MOUSE_DETECT_RADIUS) {
+				drawKnot(createPoint(canvasWidth/2, knot.y), KNOT_DETECT_COLOR);
 				return;
 			}
 		}
@@ -717,8 +722,8 @@ function mouseDragged() {
 
 	} else if (action == "DRAW_CURVE") {
 		push();
-		stroke(colors[curves.length]);
-		strokeWeight(strkWeight);
+		stroke(CURVE_COLORS[curves.length]);
+		strokeWeight(CURVE_STRKWEIGHT);
 		if (drawnPts.length > 0) {
 			var prev = drawnPts[drawnPts.length - 1];
 			line(prev.x, prev.y, current.x, current.y);
@@ -738,7 +743,7 @@ function mouseReleased() {
 	if (action == "MOVE_CURVE") {
 		checkPointsUndo.push(checkPoint);
 		checkPointsRedo = [];
-		drawCurve(curves[movedCurveIdx]);
+		reDraw();
 	} else if (action == "MOVE_SYMBOL") {	
 		checkPointsUndo.push(checkPoint);
 		checkPointsRedo = [];
@@ -748,7 +753,7 @@ function mouseReleased() {
 		for (var i = 0; i < curves.length; i++) {
 			var interX = curves[i]['interX'];
 			for (var j = 0; j < interX.length; j++) {
-				if (interX[j].symbol == undefined && getDist(current, interX[j]) < 10) {
+				if (interX[j].symbol == undefined && getDist(current, interX[j]) < MOUSE_DETECT_RADIUS) {
 					knot = interX[j];
 					movedSymbol.x = knot.x;
 					movedSymbol.y = knot.y;
@@ -761,7 +766,7 @@ function mouseReleased() {
 
 			var interY = curves[i]['interY'];
 			for (var j = 0; j < interY.length; j++) {
-				if (interY[j].symbol == undefined && getDist(current, interY[j]) < 10) {
+				if (interY[j].symbol == undefined && getDist(current, interY[j]) < MOUSE_DETECT_RADIUS) {
 					knot = interY[j];
 					movedSymbol.x = knot.x;
 					movedSymbol.y = knot.y;
@@ -776,7 +781,7 @@ function mouseReleased() {
 			for (var j = 0; j < maxima.length; j++) {
 				var knot = maxima[j];
 				
-				if (knot.symbol == undefined && getDist(current, knot) < 10) {
+				if (knot.symbol == undefined && getDist(current, knot) < MOUSE_DETECT_RADIUS) {
 					movedSymbol.x = knot.x;
 					movedSymbol.y = knot.y;
 					knot.symbol = movedSymbol;
@@ -791,7 +796,7 @@ function mouseReleased() {
 			for (var j = 0; j < minima.length; j++) {
 				var knot = minima[j];
 				
-				if (knot.symbol == undefined && getDist(current, knot) < 10) {
+				if (knot.symbol == undefined && getDist(current, knot) < MOUSE_DETECT_RADIUS) {
 					movedSymbol.x = knot.x;
 					movedSymbol.y = knot.y;
 					knot.symbol = movedSymbol;
@@ -804,12 +809,12 @@ function mouseReleased() {
 
 		if (clickedKnot != null) {
 			var knot = clickedKnot;
-			if (knot.xSymbol == undefined && getDist(current, createPoint(knot.x, canvasHeight/2)) < 10) {
+			if (knot.xSymbol == undefined && getDist(current, createPoint(knot.x, canvasHeight/2)) < MOUSE_DETECT_RADIUS) {
 				movedSymbol.x = knot.x;
 				movedSymbol.y = canvasHeight/2;
 				knot.xSymbol = movedSymbol;
 				found = true;
-			} else if (knot.ySymbol == undefined && getDist(current, createPoint(canvasWidth/2, knot.y)) < 10) {
+			} else if (knot.ySymbol == undefined && getDist(current, createPoint(canvasWidth/2, knot.y)) < MOUSE_DETECT_RADIUS) {
 				movedSymbol.x = canvasWidth/2;
 				movedSymbol.y = knot.y;
 				knot.ySymbol = movedSymbol;
@@ -821,12 +826,7 @@ function mouseReleased() {
 			freeSymbols.push(movedSymbol);
 		}
 
-
-		drawBackground();
-		drawCurves(curves);
-		refreshFreeSymbols();
-		drawSymbols(freeSymbols);
-		drawKnot3(clickedKnot);
+		reDraw();
 				
 	} else if (action == "DRAW_CURVE") {
 		// neglect if curve drawn is too short
@@ -837,14 +837,18 @@ function mouseReleased() {
 		checkPointsUndo.push(checkPoint);
 		checkPointsRedo = [];
 
-		if (Math.abs(drawnPts[0].y - canvasHeight/2) < 0.01 * canvasHeight) 
+		if (Math.abs(drawnPts[0].y - canvasHeight/2) < 0.01 * canvasWidth) {
 			drawnPts[0].y = canvasHeight/2;
-		if (Math.abs(drawnPts[0].x - canvasWidth/2) < 0.01 * canvasWidth) 
+		}
+		if (Math.abs(drawnPts[0].x - canvasWidth/2) < 0.01 * canvasWidth) {
 			drawnPts[0].x = canvasWidth/2;
-		if (Math.abs(drawnPts[drawnPts.length - 1].y - canvasHeight/2) < 0.01 * canvasHeight) 
+		}
+		if (Math.abs(drawnPts[drawnPts.length - 1].y - canvasHeight/2) < 0.01 * canvasWidth) {
 			drawnPts[drawnPts.length - 1].y = canvasHeight/2;
-		if (Math.abs(drawnPts[drawnPts.length - 1].x - canvasWidth/2) < 0.01 * canvasWidth) 
+		}
+		if (Math.abs(drawnPts[drawnPts.length - 1].x - canvasWidth/2) < 0.01 * canvasWidth) {
 			drawnPts[drawnPts.length - 1].x = canvasWidth/2;
+		}
 
 	
 		var pts = genericBezier(sample(drawnPts));
@@ -854,16 +858,12 @@ function mouseReleased() {
 		curve.interY = findInterceptY(pts);
 		curve.maxima = findMaxima(pts);
 		curve.minima = findMinima(pts);
-		curve.color = colors[curves.length];
+		curve.color = CURVE_COLORS[curves.length];
 		curves.push(curve);
 
 
 		drawnPts = [];
-		drawBackground();
-		drawCurves(curves);
-		refreshFreeSymbols();
-		drawSymbols(freeSymbols);
-		drawKnot3(clickedKnot);
+		reDraw();
 	}
 
 	return;
@@ -879,16 +879,9 @@ function mouseClicked() {
 		} else {
 			bindedKnot[symbolType] = movedSymbol;
 		}
-		drawBackground();
-		drawCurves(curves);
-		refreshFreeSymbols();
-		drawSymbols(freeSymbols);
-		drawKnot3(clickedKnot);
+		reDraw();
 	} else if (action == "MOVE_CURVE") {
-		drawBackground();
-		drawCurves(curves);
-		drawSymbols(freeSymbols);
-		drawKnot3(clickedKnot);
+		reDraw();
 	}
 
 	if (current.x < 0 || current.x > canvasWidth || current.y < 0 || current.y > canvasHeight) return;
@@ -897,18 +890,13 @@ function mouseClicked() {
 		var maxima = curves[i].maxima;
 		for (var j = 0; j < maxima.length; j++) {
 			var knot = maxima[j];
-			if (getDist(current, knot) < 10) {
-				drawBackground();
-				drawCurves(curves);
-				drawSymbols(freeSymbols);
-
+			if (getDist(current, knot) < MOUSE_DETECT_RADIUS) {
 				if (knot == clickedKnot) {
 					clickedKnot = null;
 				} else {
 					clickedKnot = knot;
-					drawKnot3(knot);
 				}
-
+				reDraw();
 				return;
 			}
 		}
@@ -916,32 +904,22 @@ function mouseClicked() {
 		var minima = curves[i].minima;
 		for (var j = 0; j < minima.length; j++) {
 			var knot = minima[j];
-			if (getDist(current, knot) < 10) {
-				drawBackground();
-				drawCurves(curves);
-				drawSymbols(freeSymbols);
-
+			if (getDist(current, knot) < MOUSE_DETECT_RADIUS) {
 				if (knot == clickedKnot) {
 					clickedKnot = null;
 				} else {
 					clickedKnot = knot;
-					drawKnot3(knot);
 				}
-
+				reDraw();
 				return;
 			}
 		}
 	}
 
-
 	if (clickedKnot != null) {
 		clickedKnot = null;
-		drawBackground();
-		drawCurves(curves);
-		refreshFreeSymbols();
-		drawSymbols(freeSymbols);
+		reDraw();
 	}
-
 
 }
 

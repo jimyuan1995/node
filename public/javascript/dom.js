@@ -54,7 +54,7 @@ function drawButton() {
 				var curves = data.curves;
 
 				drawCurves(curves);
-				drawSymbols(freeSymbols, 0);
+				drawSymbols(freeSymbols);
 			}
 		}
 		xhr.send();
@@ -75,7 +75,7 @@ function drawButton() {
 				var curves = data.curves;
 
 				drawCurves(curves);
-				drawSymbols(freeSymbols, 0);
+				drawSymbols(freeSymbols);
 			}
 		}
 		xhr.send();
@@ -106,9 +106,7 @@ function drawButton() {
 		curves = JSON.parse(checkPointUndo.curvesJSON);
 		clickedKnot = null;
 		
-		drawBackground();
-		drawCurves(curves);
-		drawSymbols(freeSymbols);
+		reDraw();
 	});
 
 	var buttonRedo = createButton("redo");
@@ -126,9 +124,7 @@ function drawButton() {
 		curves = JSON.parse(checkPointRedo.curvesJSON);
 		clickedKnot = null;
 		
-		drawBackground();
-		drawCurves(curves);
-		drawSymbols(freeSymbols);
+		reDraw();
 	});
 
 	var buttonClear = createButton('clear');
@@ -140,10 +136,8 @@ function drawButton() {
 		checkPointsUndo = [];
 		checkPointsRedo = [];
 
-		drawBackground();
-		restore();
-		refreshFreeSymbols();
-		drawSymbols(freeSymbols);
+		restoreFreeSymbols();
+		reDraw();
 	});
 
 	var buttonPrintTest = createButton("print test case");
