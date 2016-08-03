@@ -40,7 +40,8 @@ var freeSymbols = [],
 	curves = [];
 
 // for drawing curve
-var drawnPts = [];
+var drawnPts = [],
+	drawnColorIdx;
 
 // for moving curve
 var prevMousePt,
@@ -58,6 +59,7 @@ var checkPoint,
 	checkPointsUndo = [],
 	checkPointsRedo = [];
 
+var junkPt = createPoint(canvasWidth - 25, 25);
 
 function initiateFreeSymbols() {
 	freeSymbols = [];
@@ -222,7 +224,7 @@ function drawBackground() {
 // given a set of points, draw the corresponding curve.
 function drawCurve(curve, color) {
 	if (color == undefined) {
-		color = curve.color;
+		color = CURVE_COLORS[curve.colorIdx];
 	} 
 
 	push();
@@ -407,6 +409,15 @@ function drawHorizontalDotLine(y, begin, end) {
 		line(x, y, end, y);
 	}
 
+	pop();
+}
+
+function drawJunkArea(color) {
+	push();
+	stroke(color)
+	strokeWeight(10);
+	line(junkPt.x - 15, junkPt.y - 15, junkPt.x + 15, junkPt.y + 15);
+	line(junkPt.x + 15, junkPt.y - 15, junkPt.x - 15, junkPt.y + 15);	
 	pop();
 }
 
@@ -684,11 +695,14 @@ function mousePressed() {
 	symbolType = undefined;
 
 	drawnPts = [];
+	drawnColorIdx = undefined;
 
 	movedCurveIdx = undefined;
 	prevMousePt = undefined;
 
-	if (current.x < 0 || current.x > canvasWidth || current.y < 0 || current.y > canvasHeight) return;
+	if (current.x < 0 || current.x > canvasWidth || current.y < 0 || current.y > canvasHeight) {
+		return;
+	}
 	
 	checkPoint = {};
 	checkPoint.freeSymbolsJSON = JSON.stringify(freeSymbols);
@@ -804,7 +818,6 @@ function mousePressed() {
 				movedCurveIdx = i;
 				action = "MOVE_CURVE";
 				prevMousePt = current;
-				drawCurve(curves[i], MOVE_LINE_COLOR);
 				return;
 			}
 		}
@@ -812,6 +825,20 @@ function mousePressed() {
 
 	if (curves.length < CURVE_COLORS.length) {
 		action = "DRAW_CURVE";
+
+		var alreadyUsedColors = [];
+		for (var i = 0; i < curves.length; i++) {
+			alreadyUsedColors.push(curves[i].colorIdx);
+		}
+
+
+		for (var i = 0; i < CURVE_COLORS.length; i++) {
+			if (alreadyUsedColors.indexOf(i) == -1) {
+				drawnColorIdx = i;
+				return;
+			}
+		}
+
 	} else {
 		alert("Too much lines being drawn.");
 		checkPointsUndo.pop();
@@ -831,6 +858,11 @@ function mouseDragged() {
 
 		reDraw();
 		drawCurve(curves[movedCurveIdx], MOVE_LINE_COLOR);
+		drawJunkArea(KNOT_COLOR);
+
+		if (getDist(current, junkPt) < 15) {
+			drawJunkArea(KNOT_DETECT_COLOR);
+		}
 
 	} else if (action == "MOVE_SYMBOL") {
 		movedSymbol.x = current.x;
@@ -892,7 +924,7 @@ function mouseDragged() {
 
 	} else if (action == "DRAW_CURVE") {
 		push();
-		stroke(CURVE_COLORS[curves.length]);
+		stroke(CURVE_COLORS[drawnColorIdx]);
 		strokeWeight(CURVE_STRKWEIGHT);
 		if (drawnPts.length > 0) {
 			var prev = drawnPts[drawnPts.length - 1];
@@ -908,11 +940,63 @@ function mouseReleased() {
 	var current = createPoint(mouseX, mouseY);
 
 	// if it is just a click
-	if (!isMouseDragged) return;
+	if (!isMouseDragged) {
+		return;
+	}
 
 	if (action == "MOVE_CURVE") {
 		checkPointsUndo.push(checkPoint);
 		checkPointsRedo = [];
+
+		// for deletion
+		if (getDist(current, junkPt) < 15) {
+			var curve = (curves.splice(movedCurveIdx, 1))[0];
+
+			var interX = curve.interX;
+			for (var i = 0; i < interX.length; i++) {
+				var knot = interX[i];
+				if (knot.symbol != undefined) {
+					freeSymbols.push(knot.symbol);
+				}
+			}
+
+			var interY = curve.interY;
+			for (var i = 0; i < interY.length; i++) {
+				var knot = interY[i];
+				if (knot.symbol != undefined) {
+					freeSymbols.push(knot.symbol);
+				}
+			}
+
+			var maxima = curve.maxima;
+			for (var i = 0; i < maxima.length; i++) {
+				var knot = maxima[i];
+				if (knot.symbol != undefined) {
+					freeSymbols.push(knot.symbol);
+				}
+				if (knot.xSymbol != undefined) {
+					freeSymbols.push(knot.xSymbol);
+				}
+				if (knot.ySymbol != undefined) {
+					freeSymbols.push(knot.ySymbol);
+				}
+			}
+
+			var minima = curve.minima;
+			for (var i = 0; i < minima.length; i++) {
+				var knot = minima[i];
+				if (knot.symbol != undefined) {
+					freeSymbols.push(knot.symbol);
+				}
+				if (knot.xSymbol != undefined) {
+					freeSymbols.push(knot.xSymbol);
+				}
+				if (knot.ySymbol != undefined) {
+					freeSymbols.push(knot.ySymbol);
+				}
+			}
+		}
+		
 		reDraw();
 	} else if (action == "MOVE_SYMBOL") {	
 		checkPointsUndo.push(checkPoint);
@@ -1029,11 +1113,9 @@ function mouseReleased() {
 		curve.interY = findInterceptY(pts);
 		curve.maxima = findMaxima(pts);
 		curve.minima = findMinima(pts);
-		curve.color = CURVE_COLORS[curves.length];
+		curve.colorIdx = drawnColorIdx;
 		curves.push(curve);
 
-
-		drawnPts = [];
 		reDraw();
 	}
 
