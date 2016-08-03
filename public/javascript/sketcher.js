@@ -68,6 +68,17 @@ function initiateFreeSymbols() {
 	freeSymbols.push(createSymbol('C'));
 }
 
+function refreshFreeSymbols() {
+	var start = 15, 
+		separation = 30;
+
+	for (var i = 0; i < freeSymbols.length; i++) {
+		var symbol = freeSymbols[i];
+		symbol.x = start + i * separation;
+		symbol.y = start;
+	}
+}
+
 // run in the beginning by p5 library
 function setup() {
 	// p5.createCanvas
@@ -241,8 +252,6 @@ function drawCurve(curve, color) {
 	// draw x intercepts, y intercepts and turning points
 	drawKnots(curve['interX']);
 	drawKnots(curve['interY']);
-	drawKnots(curve['maxima']);
-	drawKnots(curve['minima']);
 	drawKnots2(curve['maxima']);
 	drawKnots2(curve['minima']);
 
@@ -281,6 +290,8 @@ function drawKnots(knots, color) {
 }
 
 function drawKnot2(knot) {
+	drawKnot(knot);
+
 	if (knot.xSymbol != undefined) {
 		drawVerticalDotLine(knot.x, knot.y, canvasHeight/2);
 		drawSymbol(knot.xSymbol);
@@ -422,18 +433,6 @@ function drawJunkArea(color) {
 }
 
 function reDraw() {
-
-	function refreshFreeSymbols() {
-		var start = 15, 
-			separation = 30;
-
-		for (var i = 0; i < freeSymbols.length; i++) {
-			var symbol = freeSymbols[i];
-			symbol.x = start + i * separation;
-			symbol.y = start;
-		}
-	}
-
 	drawBackground();
 	drawCurves(curves);
 	refreshFreeSymbols();
@@ -489,10 +488,8 @@ function findInterceptY(pts) {
 	return intercepts;
 }
 
-function findMaxima(pts) {
+function findTurnPts(pts, mode) {
 	if (pts.length == 0) return [];
-
-	var maxima = [];
 
 	var grad = [];
 	for (var i = 0; i < pts.length - 1; i++) {
@@ -500,6 +497,8 @@ function findMaxima(pts) {
 		var dy = pts[i+1].y - pts[i].y;
 		grad.push(dy/dx);
 	}
+
+	var turnPts = [];
 
 	for (var i = 1; i < grad.length; i++) {
 		if (grad[i-1] != NaN && grad[i] != NaN) {
@@ -520,57 +519,21 @@ function findMaxima(pts) {
 				var grad2 = dy/dx;
 
 				if (Math.abs(grad1) > 0.03 && Math.abs(grad2) > 0.03) {
-					if ((pts[i].x > pts[i-1].x && grad1 < 0 && grad2 > 0) || (pts[i].x < pts[i-1].x && grad1 > 0 && grad2 < 0)) {
-						maxima.push(createPoint(pts[i].x, pts[i].y));
-					} 
-				}
+					if (mode == 'maxima') {
+						if ((pts[i].x > pts[i-1].x && grad1 < 0 && grad2 > 0) || (pts[i].x < pts[i-1].x && grad1 > 0 && grad2 < 0)) {
+							turnPts.push(createPoint(pts[i].x, pts[i].y));
+						} 
+					} else {
+						if ((pts[i].x > pts[i-1].x && grad1 > 0 && grad2 < 0) || (pts[i].x < pts[i-1].x && grad1 < 0 && grad2 > 0)) {
+							turnPts.push(createPoint(pts[i].x, pts[i].y));
+						} 
+					}	
+				} 
 			}
 		}
 	}
 
-	return maxima;
-}
-
-function findMinima(pts) {
-	if (pts.length == 0) return [];
-
-	var minima = [];
-
-	var grad = [];
-	for (var i = 0; i < pts.length - 1; i++) {
-		var dx = pts[i+1].x - pts[i].x;
-		var dy = pts[i+1].y - pts[i].y;
-		grad.push(dy/dx);
-	}
-
-	for (var i = 1; i < grad.length; i++) {
-		if (grad[i-1] != NaN && grad[i] != NaN) {
-			if (grad[i] * grad[i-1] < 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
-
-				var l = i-1;
-				while (l >= 0 && getDist(pts[l], pts[i]) < 15) l--;
-				if (l < 0) continue;
-				var dy = pts[i].y - pts[l].y;
-				var dx = pts[i].x - pts[l].x;
-				var grad1 = dy/dx;
-
-				var r = i+1;
-				while (r < pts.length && getDist(pts[r], pts[i]) < 15) r++;
-				if (r >= pts.length) continue;
-				var dy = pts[r].y - pts[i].y;
-				var dx = pts[r].x - pts[i].x;
-				var grad2 = dy/dx;
-
-				if (Math.abs(grad1) > 0.03 && Math.abs(grad2) > 0.03) {
-					if ((pts[i].x > pts[i-1].x && grad1 > 0 && grad2 < 0) || (pts[i].x < pts[i-1].x && grad1 < 0 && grad2 > 0)) {
-						minima.push(createPoint(pts[i].x, pts[i].y));
-					} 
-				}
-			}
-		}
-	}
-
-	return minima;
+	return turnPts;
 }
 
 
@@ -582,103 +545,71 @@ function transCurve(curve, dx, dy) {
 		pts[i].y += dy;
 	}
 
-	var maxima = curve.maxima;
-	for (var i = 0; i < maxima.length; i++) {
-		var knot = maxima[i];
-		
-		knot.x += dx;
-		knot.y += dy;
-		
-		if (knot.symbol != undefined) {
-			knot.symbol.x += dx;
-			knot.symbol.y += dy;
-		}
+	function moveTurnPts(knots) {
+		for (var i = 0; i < knots.length; i++) {
+			var knot = knots[i];
+			
+			knot.x += dx;
+			knot.y += dy;
+			
+			if (knot.symbol != undefined) {
+				knot.symbol.x += dx;
+				knot.symbol.y += dy;
+			}
 
-		if (knot.xSymbol != undefined) {
-			knot.xSymbol.x = knot.x;
-		}
+			if (knot.xSymbol != undefined) {
+				knot.xSymbol.x = knot.x;
+			}
 
-		if (knot.ySymbol != undefined) {
-			knot.ySymbol.y = knot.y;
+			if (knot.ySymbol != undefined) {
+				knot.ySymbol.y = knot.y;
+			}
 		}
 	}
 
+	var maxima = curve.maxima;
+	moveTurnPts(maxima);
+
 	var minima = curve.minima;
-	for (var i = 0; i < minima.length; i++) {
-		var knot = minima[i];
-		
-		knot.x += dx;
-		knot.y += dy;
-		
-		if (knot.symbol != undefined) {
-			knot.symbol.x += dx;
-			knot.symbol.y += dy;
-		}
+	moveTurnPts(minima);
 
-		if (knot.xSymbol != undefined) {
-			knot.xSymbol.x = knot.x;
-		}
 
-		if (knot.ySymbol != undefined) {
-			knot.ySymbol.y = knot.y;
+	function moveInter(inter, newInter) {
+		for (var i = 0; i < inter.length; i++) {
+			if (inter[i].symbol != undefined) {
+				var symbol = inter[i].symbol;
+
+				var found = false,
+					min = 50,
+					knot;
+				for (var j = 0; j < newInter.length; j++) {
+					if (getDist(inter[i], newInter[j]) < min) {
+						min = getDist(inter[i], newInter[j]);
+						knot = newInter[j];
+						found = true;
+					}
+				}
+
+				if (found) {
+					symbol.x = knot.x;
+					symbol.y = knot.y;
+					knot.symbol = symbol;
+				} else {
+					freeSymbols.push(symbol);
+				}
+			}
 		}
+		return newInter;
 	}
 
 	var interX = curve.interX,
 		newInterX = findInterceptX(pts);
-	for (var i = 0; i < interX.length; i++) {
-		if (interX[i].symbol != undefined) {
-			var symbol = interX[i].symbol;
+	curve.interX = moveInter(interX, newInterX);
 
-			var found = false,
-				min = 50,
-				knot;
-			for (var j = 0; j < newInterX.length; j++) {
-				if (getDist(interX[i], newInterX[j]) < min) {
-					min = getDist(interX[i], newInterX[j]);
-					knot = newInterX[j];
-					found = true;
-				}
-			}
-
-			if (found) {
-				symbol.x = knot.x;
-				symbol.y = knot.y;
-				knot.symbol = symbol;
-			} else {
-				freeSymbols.push(symbol);
-			}
-		}
-	}
-	curve.interX = newInterX;
 
 	var interY = curve.interY,
 		newInterY = findInterceptY(pts);
-	for (var i = 0; i < interY.length; i++) {
-		if (interY[i].symbol != undefined) {
-			var symbol = interY[i].symbol;
-
-			var found = false,
-				min = 50,
-				knot;
-			for (var j = 0; j < newInterY.length; j++) {
-				if (getDist(interY[i], newInterY[j]) < min) {
-					min = getDist(interY[i], newInterY[j]);
-					knot = newInterY[j];
-					found = true;
-				}
-			}
-
-			if (found) {
-				symbol.x = knot.x;
-				symbol.y = knot.y;
-				knot.symbol = symbol;
-			} else {
-				freeSymbols.push(symbol);
-			}
-		}
-	}
-	curve.interY = newInterY;
+	curve.interY = moveInter(interY, newInterY);
 
 	return;
 }
@@ -700,14 +631,20 @@ function mousePressed() {
 	movedCurveIdx = undefined;
 	prevMousePt = undefined;
 
+
+	// does not react if mouse is outside canvas
 	if (current.x < 0 || current.x > canvasWidth || current.y < 0 || current.y > canvasHeight) {
 		return;
 	}
 	
+
+	// record down current status, may be used later for undo.
 	checkPoint = {};
 	checkPoint.freeSymbolsJSON = JSON.stringify(freeSymbols);
 	checkPoint.curvesJSON = JSON.stringify(curves);
 
+
+	// check if it is to move a symbol
 	for (var i = 0; i < freeSymbols.length; i++) {
 		if (getDist(current, freeSymbols[i]) < MOUSE_DETECT_RADIUS) {
 			movedSymbol = freeSymbols[i];
@@ -717,100 +654,62 @@ function mousePressed() {
 		}
 	}
 
-	for (var i = 0; i < curves.length; i++) {
-		var interX = curves[i]['interX'];
-		for (var j = 0; j < interX.length; j++) {
-			if (interX[j].symbol != undefined && getDist(current, interX[j]) < MOUSE_DETECT_RADIUS) {
-				movedSymbol = interX[j].symbol;
-				interX[j].symbol = undefined;
-				bindedKnot = knot;
-				symbolType = 'symbol';
-				action = "MOVE_SYMBOL";
-				return;
-			}
-		}
-
-		var interY = curves[i]['interY'];
-		for (var j = 0; j < interY.length; j++) {
-			if (interY[j].symbol != undefined && getDist(current, interY[j]) < MOUSE_DETECT_RADIUS) {
-				movedSymbol = interY[j].symbol;
-				interY[j].symbol = undefined;
-				bindedKnot = knot;
-				symbolType = 'symbol';
-				action = "MOVE_SYMBOL";
-				return;
-			}
-		}
-
-		var maxima = curves[i]['maxima'];
-		for (var j = 0; j < maxima.length; j++) {
-			var knot = maxima[j];
-
-			if (knot.symbol != undefined && getDist(current, knot.symbol) < MOUSE_DETECT_RADIUS) {
-				movedSymbol = knot.symbol;
-				knot.symbol = undefined;
-				bindedKnot = knot;
-				symbolType = 'symbol';
-				action = "MOVE_SYMBOL";
-				return;
-			}
-
-			if (knot.xSymbol != undefined && getDist(current, knot.xSymbol) < MOUSE_DETECT_RADIUS) {
-				movedSymbol = knot.xSymbol;
-				knot.xSymbol = undefined;
-				bindedKnot = knot;
-				symbolType = 'xSymbol';
-				action = "MOVE_SYMBOL";
-				return;
-			}
-
-			if (knot.ySymbol != undefined && getDist(current, knot.ySymbol) < MOUSE_DETECT_RADIUS) {
-				movedSymbol = knot.ySymbol;
-				knot.ySymbol = undefined;
-				bindedKnot = knot;
-				symbolType = 'ySymbol';
-				action = "MOVE_SYMBOL";
-				return;
-			}
-
-		}
-
-		var minima = curves[i]['minima'];
-		for (var j = 0; j < minima.length; j++) {
-			var knot = minima[j];
-
+	var found = false;
+	function detach1(knots) {
+		for (var j = 0; j < knots.length && !found; j++) {
+			var knot = knots[j];
 			if (knot.symbol != undefined && getDist(current, knot) < MOUSE_DETECT_RADIUS) {
 				movedSymbol = knot.symbol;
 				knot.symbol = undefined;
 				bindedKnot = knot;
 				symbolType = 'symbol';
-				action = "MOVE_SYMBOL";
-				return;
+				found = true;
 			}
+		}	
+	}
 
+	function detach2(knots) {
+		detach1(knots);
+		for (var j = 0; j < knots.length && !found; j++) {
+			var knot = knots[j];
 			if (knot.xSymbol != undefined && getDist(current, knot.xSymbol) < MOUSE_DETECT_RADIUS) {
 				movedSymbol = knot.xSymbol;
 				knot.xSymbol = undefined;
 				bindedKnot = knot;
 				symbolType = 'xSymbol';
-				action = "MOVE_SYMBOL";
-				return;
+				found = true;
 			}
-
 			if (knot.ySymbol != undefined && getDist(current, knot.ySymbol) < MOUSE_DETECT_RADIUS) {
 				movedSymbol = knot.ySymbol;
 				knot.ySymbol = undefined;
 				bindedKnot = knot;
 				symbolType = 'ySymbol';
-				action = "MOVE_SYMBOL";
-				return;
+				found = true;
 			}
-
 		}
+	}
 
+	for (var i = 0; i < curves.length && !found; i++) {
+		var interX = curves[i]['interX'];
+		detach1(interX);
+
+		var interY = curves[i]['interY'];
+		detach1(interY);
+
+		var maxima = curves[i]['maxima'];
+		detach2(maxima);
+
+		var minima = curves[i]['minima'];
+		detach2(minima);
+	}
+
+	if (found) {
+		action = "MOVE_SYMBOL";
+		return;
 	}
 
 
+	// check if it is moving curve.
 	for (var i = 0; i < curves.length; i++) {
 		var pts = curves[i].pts;
 		for (var j = 0; j < pts.length; j++) {
@@ -823,6 +722,8 @@ function mousePressed() {
 		}
 	}
 
+
+	// if it is drawing curve
 	if (curves.length < CURVE_COLORS.length) {
 		action = "DRAW_CURVE";
 
@@ -830,8 +731,6 @@ function mousePressed() {
 		for (var i = 0; i < curves.length; i++) {
 			alreadyUsedColors.push(curves[i].colorIdx);
 		}
-
-
 		for (var i = 0; i < CURVE_COLORS.length; i++) {
 			if (alreadyUsedColors.indexOf(i) == -1) {
 				drawnColorIdx = i;
@@ -871,50 +770,37 @@ function mouseDragged() {
 		reDraw();
 		drawSymbol(movedSymbol, MOVE_SYMBOL_COLOR);
 
-		for (var i = 0; i < curves.length; i++) {
-			var interX = curves[i]['interX'];
-			for (var j = 0; j < interX.length; j++) {
-				if (interX[j].symbol == undefined && getDist(current, interX[j]) < MOUSE_DETECT_RADIUS) {
-					drawKnot(interX[j], KNOT_DETECT_COLOR);
-					return;
-				}
-			}
 
-			var interY = curves[i]['interY'];
-			for (var j = 0; j < interY.length; j++) {
-				if (interY[j].symbol == undefined && getDist(current, interY[j]) < MOUSE_DETECT_RADIUS) {
-					drawKnot(interY[j], KNOT_DETECT_COLOR);
-					return;
-				}
-			}
-
-			var maxima = curves[i]['maxima'];
-			for (var j = 0; j < maxima.length; j++) {
-				var knot = maxima[j];
-				if (knot.symbol == undefined && getDist(current, knot) < MOUSE_DETECT_RADIUS) {
-					drawKnot(knot, KNOT_DETECT_COLOR);
-					return;
-				}
-			}
-
-			var minima = curves[i]['minima'];
-			for (var j = 0; j < minima.length; j++) {
-				var knot = minima[j];
-				if (knot.symbol == undefined && getDist(current, knot) < MOUSE_DETECT_RADIUS) {
-					drawKnot(knot, KNOT_DETECT_COLOR);
+		function detect(knots) {
+			for (var j = 0; j < knots.length; j++) {
+				if (knots[j].symbol == undefined && getDist(current, knots[j]) < MOUSE_DETECT_RADIUS) {
+					drawKnot(knots[j], KNOT_DETECT_COLOR);
 					return;
 				}
 			}
 		}
 
+		for (var i = 0; i < curves.length; i++) {
+			var interX = curves[i]['interX'];
+			detect(interX);
+
+			var interY = curves[i]['interY'];
+			detect(interY);
+
+			var maxima = curves[i]['maxima'];
+			detect(maxima);
+
+			var minima = curves[i]['minima'];
+			detect(minima);
+		}
+
+
 		if (clickedKnot != null) {
 			var knot = clickedKnot;
-			
 			if (knot.xSymbol == undefined && getDist(current, createPoint(knot.x, canvasHeight/2)) < MOUSE_DETECT_RADIUS) {
 				drawKnot(createPoint(knot.x, canvasHeight/2), KNOT_DETECT_COLOR);
 				return;
 			}
-
 			if (knot.ySymbol == undefined && getDist(current, createPoint(canvasWidth/2, knot.y)) < MOUSE_DETECT_RADIUS) {
 				drawKnot(createPoint(canvasWidth/2, knot.y), KNOT_DETECT_COLOR);
 				return;
@@ -945,6 +831,7 @@ function mouseReleased() {
 	}
 
 	if (action == "MOVE_CURVE") {
+		clickedKnot = null;
 		checkPointsUndo.push(checkPoint);
 		checkPointsRedo = [];
 
@@ -952,49 +839,32 @@ function mouseReleased() {
 		if (getDist(current, junkPt) < 15) {
 			var curve = (curves.splice(movedCurveIdx, 1))[0];
 
-			var interX = curve.interX;
-			for (var i = 0; i < interX.length; i++) {
-				var knot = interX[i];
-				if (knot.symbol != undefined) {
-					freeSymbols.push(knot.symbol);
+			function freeAllSymbols(knots) {
+				for (var i = 0; i < knots.length; i++) {
+					var knot = knots[i];
+					if (knot.symbol != undefined) {
+						freeSymbols.push(knot.symbol);
+					}
+					if (knot.xSymbol != undefined) {
+						freeSymbols.push(knot.xSymbol);
+					}
+					if (knot.ySymbol != undefined) {
+						freeSymbols.push(knot.ySymbol);
+					}
 				}
 			}
+
+			var interX = curve.interX;
+			freeAllSymbols(interX);
 
 			var interY = curve.interY;
-			for (var i = 0; i < interY.length; i++) {
-				var knot = interY[i];
-				if (knot.symbol != undefined) {
-					freeSymbols.push(knot.symbol);
-				}
-			}
+			freeAllSymbols(interY);
 
 			var maxima = curve.maxima;
-			for (var i = 0; i < maxima.length; i++) {
-				var knot = maxima[i];
-				if (knot.symbol != undefined) {
-					freeSymbols.push(knot.symbol);
-				}
-				if (knot.xSymbol != undefined) {
-					freeSymbols.push(knot.xSymbol);
-				}
-				if (knot.ySymbol != undefined) {
-					freeSymbols.push(knot.ySymbol);
-				}
-			}
+			freeAllSymbols(maxima);
 
 			var minima = curve.minima;
-			for (var i = 0; i < minima.length; i++) {
-				var knot = minima[i];
-				if (knot.symbol != undefined) {
-					freeSymbols.push(knot.symbol);
-				}
-				if (knot.xSymbol != undefined) {
-					freeSymbols.push(knot.xSymbol);
-				}
-				if (knot.ySymbol != undefined) {
-					freeSymbols.push(knot.ySymbol);
-				}
-			}
+			freeAllSymbols(minima);	
 		}
 		
 		reDraw();
@@ -1004,64 +874,32 @@ function mouseReleased() {
 
 		var found = false;
 
-		for (var i = 0; i < curves.length; i++) {
-			var interX = curves[i]['interX'];
-			for (var j = 0; j < interX.length; j++) {
-				if (interX[j].symbol == undefined && getDist(current, interX[j]) < MOUSE_DETECT_RADIUS) {
-					knot = interX[j];
+		function attach(knots) {
+			for (var j = 0; j < knots.length && !found; j++) {
+				var knot = knots[j];
+				if (knot.symbol == undefined && getDist(current, knot) < MOUSE_DETECT_RADIUS) {
 					movedSymbol.x = knot.x;
 					movedSymbol.y = knot.y;
 					knot.symbol = movedSymbol;
 					found = true;
-					break;
 				}
 			}
-			if (found) break;
+		}
+		for (var i = 0; i < curves.length && !found; i++) {
+			var interX = curves[i]['interX'];
+			attach(interX);
 
 			var interY = curves[i]['interY'];
-			for (var j = 0; j < interY.length; j++) {
-				if (interY[j].symbol == undefined && getDist(current, interY[j]) < MOUSE_DETECT_RADIUS) {
-					knot = interY[j];
-					movedSymbol.x = knot.x;
-					movedSymbol.y = knot.y;
-					knot.symbol = movedSymbol;
-					found = true;
-					break;
-				}
-			}
-			if (found) break;
+			attach(interY);
 
 			var maxima = curves[i]['maxima'];
-			for (var j = 0; j < maxima.length; j++) {
-				var knot = maxima[j];
-				
-				if (knot.symbol == undefined && getDist(current, knot) < MOUSE_DETECT_RADIUS) {
-					movedSymbol.x = knot.x;
-					movedSymbol.y = knot.y;
-					knot.symbol = movedSymbol;
-					found = true;
-					break;
-				}
-			}
-			if (found) break;
-
+			attach(maxima);
 
 			var minima = curves[i]['minima'];
-			for (var j = 0; j < minima.length; j++) {
-				var knot = minima[j];
-				
-				if (knot.symbol == undefined && getDist(current, knot) < MOUSE_DETECT_RADIUS) {
-					movedSymbol.x = knot.x;
-					movedSymbol.y = knot.y;
-					knot.symbol = movedSymbol;
-					found = true;
-					break;
-				}
-			}
-			if (found) break;
+			attach(minima);
 		}
 
-		if (clickedKnot != null) {
+		if (clickedKnot != null && !found) {
 			var knot = clickedKnot;
 			if (knot.xSymbol == undefined && getDist(current, createPoint(knot.x, canvasHeight/2)) < MOUSE_DETECT_RADIUS) {
 				movedSymbol.x = knot.x;
@@ -1111,8 +949,8 @@ function mouseReleased() {
 		curve.pts = pts;
 		curve.interX = findInterceptX(pts);
 		curve.interY = findInterceptY(pts);
-		curve.maxima = findMaxima(pts);
-		curve.minima = findMinima(pts);
+		curve.maxima = findTurnPts(pts, 'maxima');
+		curve.minima = findTurnPts(pts, 'minima');
 		curve.colorIdx = drawnColorIdx;
 		curves.push(curve);
 
@@ -1200,11 +1038,9 @@ function encodeData() {
 
 	var data = {};
 	data.descriptor = "";
-
 	data.canvasWidth = canvasWidth;
 	data.canvasHeight = canvasHeight;
 
-	
 	var clonedCurves = clone(curves);
 	
 	// sort segments according to their left most points.
@@ -1226,60 +1062,52 @@ function encodeData() {
 	clonedCurves.sort(compare);
 
 
+	function normalise(pt) {
+		pt.x = (pt.x - canvasWidth/2) / canvasWidth;
+		pt.y = (canvasHeight/2 - pt.y) / canvasHeight;
+	}
+
+	function normalise1(knots) {
+		for (var j = 0; j < knots.length; j++) {
+			var knot = knots[j];
+			normalise(knot);
+			if (knot.symbol != undefined) {
+				normalise(knot.symbol);
+			}
+		}
+	}
+
+	function normalise2(knots) {
+		normalise1(knots);
+		for (var j = 0; j < knots.length; j++) {
+			var knot = knots[j];
+			if (knot.xSymbol != undefined) {
+				normalise(knot.xSymbol);
+			}
+			if (knot.ySymbol != undefined) {
+				normalise(knot.ySymbol);
+			}
+		}
+	}
+
+
 	for (var i = 0; i < clonedCurves.length; i++) {
 		var pts = clonedCurves[i].pts;
 		for (var j = 0; j < pts.length; j++) {
-			pts[j].x = (pts[j].x - canvasWidth/2) / canvasWidth;
-			pts[j].y = (canvasHeight/2 - pts[j].y) / canvasHeight;
+			normalise(pts[j]);
 		}
 
 		var interX = clonedCurves[i].interX;
-		for (var j = 0; j < interX.length; j++) {
-			var knot = interX[j];
-			knot.x = (knot.x - canvasWidth/2) / canvasWidth;
-			knot.y = (canvasHeight/2 - knot.y) / canvasHeight;
-			if (knot.symbol != undefined) {
-				var symbol = knot.symbol;
-				symbol.x = (symbol.x - canvasWidth/2) / canvasWidth;
-				symbol.y = (canvasHeight/2 - symbol.y) / canvasHeight;
-			}
-		}
+		normalise1(interX);
 
 		var interY = clonedCurves[i].interY;
-		for (var j = 0; j < interY.length; j++) {
-			var knot = interY[j];
-			knot.x = (knot.x - canvasWidth/2) / canvasWidth;
-			knot.y = (canvasHeight/2 - knot.y) / canvasHeight;
-			if (knot.symbol != undefined) {
-				var symbol = knot.symbol;
-				symbol.x = (symbol.x - canvasWidth/2) / canvasWidth;
-				symbol.y = (canvasHeight/2 - symbol.y) / canvasHeight;
-			}
-		}
+		normalise1(interY);
 
 		var maxima = clonedCurves[i].maxima;
-		for (var j = 0; j < maxima.length; j++) {
-			var knot = maxima[j];
-			knot.x = (knot.x - canvasWidth/2) / canvasWidth;
-			knot.y = (canvasHeight/2 - knot.y) / canvasHeight;
-			if (knot.symbol != undefined) {
-				var symbol = knot.symbol;
-				symbol.x = (symbol.x - canvasWidth/2) / canvasWidth;
-				symbol.y = (canvasHeight/2 - symbol.y) / canvasHeight;
-			}
-		}
+		normalise2(maxima);
 
 		var minima = clonedCurves[i].minima;
-		for (var j = 0; j < minima.length; j++) {
-			var knot = minima[j];
-			knot.x = (knot.x - canvasWidth/2) / canvasWidth;
-			knot.y = (canvasHeight/2 - knot.y) / canvasHeight;
-			if (knot.symbol != undefined) {
-				var symbol = knot.symbol;
-				symbol.x = (symbol.x - canvasWidth/2) / canvasWidth;
-				symbol.y = (canvasHeight/2 - symbol.y) / canvasHeight;
-			}
-		}
+		normalise2(minima);
 	}
 
 	data.curves = clonedCurves;
@@ -1287,8 +1115,7 @@ function encodeData() {
 	var clonedFreeSymbols = clone(freeSymbols);
 	for (var i = 0; i < clonedFreeSymbols.length; i++) {
 		var symbol = clonedFreeSymbols[i];
-		symbol.x = (symbol.x - canvasWidth/2) / canvasWidth;
-		symbol.y = (canvasHeight/2 - symbol.y) / canvasHeight;
+		normalise(symbol);
 	}
 	data.freeSymbols = clonedFreeSymbols;
 
@@ -1297,74 +1124,60 @@ function encodeData() {
 
 function decodeData(data) {
 
+	function denormalise(pt) {
+			pt.x = pt.x * canvasWidth + canvasWidth/2;
+			pt.y = canvasHeight/2 - pt.y * canvasHeight;
+		}
+
+	function denormalise1(knots) {
+		for (var j = 0; j < knots.length; j++) {
+			var knot = knots[j];
+			denormalise(knot);
+			if (knot.symbol != undefined) {
+				denormalise(knot.symbol);
+			}
+		}
+	}
+
+	function denormalise2(knots) {
+		denormalise1(knots);
+		for (var j = 0; j < knots.length; j++) {
+			var knot = knots[j];
+			if (knot.xSymbol != undefined) {
+				denormalise(knot.xSymbol);
+			}
+			if (knot.ySymbol != undefined) {
+				denormalise(knot.ySymbol);
+			}
+		}
+	}
+
+	
 	var curves = data.curves;
 	for (var i = 0; i < curves.length; i++) {
+
 		var pts = curves[i].pts;
 		for (var j = 0; j < pts.length; j++) {
-			pts[j].x = pts[j].x * canvasWidth + canvasWidth/2;
-			pts[j].y = canvasHeight/2 - pts[j].y * canvasHeight;
+			denormalise(pts[j]);
 		}
-
-
-		// 4 duplicated codes
 
 		var interX = curves[i].interX;
-		for (var j = 0; j < interX.length; j++) {
-			var knot = interX[j];
-			knot.x = knot.x * canvasWidth + canvasWidth/2;
-			knot.y = canvasHeight/2 - knot.y * canvasHeight;
-			if (knot.symbol != undefined) {
-				var symbol = knot.symbol;
-				symbol.x = symbol.x * canvasWidth + canvasWidth/2;
-				symbol.y = canvasHeight/2 - symbol.y * canvasHeight;
-			}
-		}
+		denormalise1(interX);
 
 		var interY = curves[i].interY;
-		for (var j = 0; j < interY.length; j++) {
-			var knot = interY[j];
-			knot.x = knot.x * canvasWidth + canvasWidth/2;
-			knot.y = canvasHeight/2 - knot.y * canvasHeight;
-			if (knot.symbol != undefined) {
-				var symbol = knot.symbol;
-				symbol.x = symbol.x * canvasWidth + canvasWidth/2;
-				symbol.y = canvasHeight/2 - symbol.y * canvasHeight;
-			}
-		}
-
+		denormalise1(interY);
 
 		var maxima = curves[i].maxima;
-		for (var j = 0; j < maxima.length; j++) {
-			var knot = maxima[j];
-			knot.x = knot.x * canvasWidth + canvasWidth/2;
-			knot.y = canvasHeight/2 - knot.y * canvasHeight;
-			if (knot.symbol != undefined) {
-				var symbol = knot.symbol;
-				symbol.x = symbol.x * canvasWidth + canvasWidth/2;
-				symbol.y = canvasHeight/2 - symbol.y * canvasHeight;
-			}
-		}
-
+		denormalise2(maxima);
 
 		var minima = curves[i].minima;
-		for (var j = 0; j < minima.length; j++) {
-			var knot = minima[j];
-			knot.x = knot.x * canvasWidth + canvasWidth/2;
-			knot.y = canvasHeight/2 - knot.y * canvasHeight;
-			if (knot.symbol != undefined) {
-				var symbol = knot.symbol;
-				symbol.x = symbol.x * canvasWidth + canvasWidth/2;
-				symbol.y = canvasHeight/2 - symbol.y * canvasHeight;
-			}
-		}
+		denormalise2(minima);
 	}
 
 	var freeSymbols = data.freeSymbols;
 	for (var j = 0; j < freeSymbols.length; j++) {
-		freeSymbols[j].x = freeSymbols[j].x * canvasWidth + canvasWidth/2;
-		freeSymbols[j].y = canvasHeight/2 - freeSymbols[j].y * canvasHeight;
+		denormalise(freeSymbols[i]);
 	}
-
 }
 
 
