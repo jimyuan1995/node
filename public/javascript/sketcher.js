@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-// func.getDist();
 
 // canvas coefficients
 var canvasHeight = 600,
