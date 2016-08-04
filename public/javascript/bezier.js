@@ -41,7 +41,6 @@ function genericBezier(pts) {
 			sx += tmp3 * pts[r].x;
 			sy += tmp3 * pts[r].y;
 		}
-		// createPoint from point.js
 		bezier.push(createPoint(sx, sy));
 	}
 	bezier.push(pts[pts.length - 1]);

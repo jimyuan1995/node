@@ -656,7 +656,10 @@ function mousePressed() {
 
 	var found = false;
 	function detach1(knots) {
-		for (var j = 0; j < knots.length && !found; j++) {
+		if (found) {
+			return;
+		}
+		for (var j = 0; j < knots.length; j++) {
 			var knot = knots[j];
 			if (knot.symbol != undefined && getDist(current, knot) < MOUSE_DETECT_RADIUS) {
 				movedSymbol = knot.symbol;
@@ -669,8 +672,11 @@ function mousePressed() {
 	}
 
 	function detach2(knots) {
+		if (found) {
+			return;
+		}
 		detach1(knots);
-		for (var j = 0; j < knots.length && !found; j++) {
+		for (var j = 0; j < knots.length; j++) {
 			var knot = knots[j];
 			if (knot.xSymbol != undefined && getDist(current, knot.xSymbol) < MOUSE_DETECT_RADIUS) {
 				movedSymbol = knot.xSymbol;
@@ -689,7 +695,7 @@ function mousePressed() {
 		}
 	}
 
-	for (var i = 0; i < curves.length && !found; i++) {
+	for (var i = 0; i < curves.length; i++) {
 		var interX = curves[i]['interX'];
 		detach1(interX);
 
@@ -701,6 +707,10 @@ function mousePressed() {
 
 		var minima = curves[i]['minima'];
 		detach2(minima);
+
+		if (found) {
+			break;
+		}
 	}
 
 	if (found) {
@@ -769,7 +779,6 @@ function mouseDragged() {
 
 		reDraw();
 		drawSymbol(movedSymbol, MOVE_SYMBOL_COLOR);
-
 
 		function detect(knots) {
 			for (var j = 0; j < knots.length; j++) {
@@ -875,7 +884,10 @@ function mouseReleased() {
 		var found = false;
 
 		function attach(knots) {
-			for (var j = 0; j < knots.length && !found; j++) {
+			if (found) {
+				return;
+			}
+			for (var j = 0; j < knots.length; j++) {
 				var knot = knots[j];
 				if (knot.symbol == undefined && getDist(current, knot) < MOUSE_DETECT_RADIUS) {
 					movedSymbol.x = knot.x;
@@ -885,7 +897,8 @@ function mouseReleased() {
 				}
 			}
 		}
-		for (var i = 0; i < curves.length && !found; i++) {
+
+		for (var i = 0; i < curves.length; i++) {
 			var interX = curves[i]['interX'];
 			attach(interX);
 
@@ -897,6 +910,10 @@ function mouseReleased() {
 
 			var minima = curves[i]['minima'];
 			attach(minima);
+
+			if (found) {
+				break;
+			}
 		}
 
 		if (clickedKnot != null && !found) {
