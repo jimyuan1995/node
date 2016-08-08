@@ -726,6 +726,7 @@ function mousePressed() {
 			if (getDist(pts[j], current) < MOUSE_DETECT_RADIUS) {
 				movedCurveIdx = i;
 				action = "MOVE_CURVE";
+				clickedKnot = null;
 				prevMousePt = current;
 				return;
 			}
@@ -840,7 +841,6 @@ function mouseReleased() {
 	}
 
 	if (action == "MOVE_CURVE") {
-		clickedKnot = null;
 		checkPointsUndo.push(checkPoint);
 		checkPointsRedo = [];
 
@@ -1193,7 +1193,7 @@ function decodeData(data) {
 
 	var freeSymbols = data.freeSymbols;
 	for (var j = 0; j < freeSymbols.length; j++) {
-		denormalise(freeSymbols[i]);
+		denormalise(freeSymbols[j]);
 	}
 }
 
@@ -1254,6 +1254,9 @@ function drawButton() {
 				decodeData(data);
 
 				var freeSymbols = data.freeSymbols;
+
+				console.log(freeSymbols);
+
 				var curves = data.curves;
 
 				drawCurves(curves);
