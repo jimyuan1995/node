@@ -12,4 +12,19 @@ function print(filename, data) {
 
 }
 
+function newPrint(req, res) {
+	var filename = req.query.filename;
+	var data = req.query.data;
+	console.log(filename);
+
+	fs.writeFile(filename, data, function(err) {
+		if (err) {
+			console.log(err);
+			return;
+		}
+		console.log("Print to " + filename + " succeeds.");
+	});
+}
+
+exports.newPrint = newPrint;
 exports.print = print;

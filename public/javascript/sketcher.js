@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+var cnv;
 
 // canvas coefficients
 var canvasHeight = 600,
@@ -82,7 +83,7 @@ function refreshFreeSymbols() {
 // run in the beginning by p5 library
 function setup() {
 	// p5.createCanvas
-	createCanvas(canvasWidth, canvasHeight).position(50,50);
+	cnv = createCanvas(canvasWidth, canvasHeight).position(50,50);
 
 	noLoop();
 	cursor(CROSS);
@@ -502,39 +503,46 @@ function findTurnPts(pts, mode) {
 
 	for (var i = 1; i < grad.length; i++) {
 		if (grad[i-1] != NaN && grad[i] != NaN) {
-			if (grad[i] * grad[i-1] < 0 && (pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
+			if (grad[i] * grad[i-1] < 0 || grad[i] == 0) {
+				if ((pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
+					var range = 30;
+					var limit = 0.05;
 
-				var l = i-1;
-				while (l >= 0 && getDist(pts[l], pts[i]) < 15) l--;
-				if (l < 0) continue;
-				var dy = pts[i].y - pts[l].y;
-				var dx = pts[i].x - pts[l].x;
-				var grad1 = dy/dx;
+					var l = i - 1;
+		            while (l >= 0 && getDist(pts[l], pts[i]) < range && Math.abs(grad[l]) < limit) {
+		                l--;
+		            }
+		            if (l < 0 || getDist(pts[l], pts[i]) >= range) {
+		                continue;
+		            }
 
-				var r = i+1;
-				while (r < pts.length && getDist(pts[r], pts[i]) < 15) r++;
-				if (r >= pts.length) continue;
-				var dy = pts[r].y - pts[i].y;
-				var dx = pts[r].x - pts[i].x;
-				var grad2 = dy/dx;
+		            var r = i;
+		            while (r < grad.length && getDist(pts[i], pts[r + 1]) < range && Math.abs(grad[r]) < limit) {
+		                r++;
+		            }
+		            if (r >= grad.length || getDist(pts[i], pts[r + 1]) >= range) {
+		                continue;
+		            }
 
-				if (Math.abs(grad1) > 0.03 && Math.abs(grad2) > 0.03) {
+		            var acc1 = grad[l];
+		            var acc2 = grad[r];
+
 					if (mode == 'maxima') {
-						if ((pts[i].x > pts[i-1].x && grad1 < 0 && grad2 > 0) || (pts[i].x < pts[i-1].x && grad1 > 0 && grad2 < 0)) {
+						if ((pts[i].x > pts[i-1].x && acc1 < 0 && acc2 > 0) || (pts[i].x < pts[i-1].x && acc1 > 0 && acc2 < 0)) {
 							turnPts.push(createPoint(pts[i].x, pts[i].y));
 						} 
 					} else {
-						if ((pts[i].x > pts[i-1].x && grad1 > 0 && grad2 < 0) || (pts[i].x < pts[i-1].x && grad1 < 0 && grad2 > 0)) {
+						if ((pts[i].x > pts[i-1].x && acc1 > 0 && acc2 < 0) || (pts[i].x < pts[i-1].x && acc1 < 0 && acc2 > 0)) {
 							turnPts.push(createPoint(pts[i].x, pts[i].y));
 						} 
 					}	
-				} 
+				}
 			}
 		}
 	}
 
 	return turnPts;
-}
+}		
 
 
 // given a curve, translate the curve
@@ -1054,7 +1062,6 @@ function encodeData() {
 	}
 
 	var data = {};
-	data.descriptor = "";
 	data.canvasWidth = canvasWidth;
 	data.canvasHeight = canvasHeight;
 
@@ -1080,8 +1087,10 @@ function encodeData() {
 
 
 	function normalise(pt) {
-		pt.x = (pt.x - canvasWidth/2) / canvasWidth;
-		pt.y = (canvasHeight/2 - pt.y) / canvasHeight;
+		var x = (pt.x - canvasWidth/2) / canvasWidth;
+        var y = (canvasHeight/2 - pt.y) / canvasHeight;
+        pt.x = Math.trunc(x * 10000) / 10000;
+        pt.y = Math.trunc(y * 10000) / 10000;
 	}
 
 	function normalise1(knots) {
@@ -1197,6 +1206,22 @@ function decodeData(data) {
 	}
 }
 
+function newPrint(filename) {
+	var path = "/Users/YUAN/Desktop/nodejs/public/json/" + filename;
+	var data = encodeData();
+	var params = "data=" + JSON.stringify(data) + "&filename=" + path;
+
+	var url = '/print';
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", url + "?" + params, true);
+	xhr.onreadystatechange = function() {
+		if (xhr.readyState == 4 && xhr.status == 200) {
+			alert(xhr.responseText);
+		}
+	}
+	xhr.send();
+}
+
 
 function drawButton() {
 	var upper = 20;
@@ -1254,8 +1279,6 @@ function drawButton() {
 				decodeData(data);
 
 				var freeSymbols = data.freeSymbols;
-
-				console.log(freeSymbols);
 
 				var curves = data.curves;
 
@@ -1364,7 +1387,17 @@ function drawButton() {
 	});
 }
 
+function mySave() {
+	var mimeType = 'image/jpeg';
+	var downloadMime = 'image/octet-stream';
+    var imageData = $('#defaultCanvas0').toDataURL('image/jpeg', 0.1);
+    console.log(imageData);
 
+	 saveFrames("out", "png", 1, 1, function(data){
+	    println(data);
+	  });
+
+}
 
 
 

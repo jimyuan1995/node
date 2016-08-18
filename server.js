@@ -35,3 +35,6 @@ var server = app.listen(8888, function () {
   console.log("NodeJS listening localhost:8888");
 });
 
+app.get('/print', function(req, res) {
+	printer.newPrint(req, res);
+})
