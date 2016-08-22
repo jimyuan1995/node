@@ -511,22 +511,23 @@ function findTurnPts(pts, mode) {
 		if (grad[i-1] != NaN && grad[i] != NaN) {
 			if (grad[i] * grad[i-1] < 0 || grad[i] == 0) {
 				if ((pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) > 0) {
-					var range = 30;
-					var limit = 0.05;
 
-					var l = i - 1;
-		            while (l >= 0 && getDist(pts[l], pts[i]) < range && Math.abs(grad[l]) < limit) {
+
+					var limit = 0.3;
+
+					var l = i - 2;
+		            while (l >= 0 && Math.abs(grad[l]) < limit && Math.abs(grad[l]) > Math.abs(grad[l+1]) && grad[l] * grad[l+1] >= 0) {
 		                l--;
 		            }
-		            if (l < 0 || getDist(pts[l], pts[i]) >= range) {
+		            if (!(Math.abs(grad[l]) >= limit)) {
 		                continue;
 		            }
 
-		            var r = i;
-		            while (r < grad.length && getDist(pts[i], pts[r + 1]) < range && Math.abs(grad[r]) < limit) {
+		            var r = i + 1;
+		            while (r < grad.length && Math.abs(grad[r]) < limit && Math.abs(grad[r]) > Math.abs(grad[r-1]) && grad[r] * grad[r-1] >= 0) {
 		                r++;
 		            }
-		            if (r >= grad.length || getDist(pts[i], pts[r + 1]) >= range) {
+		            if (!(Math.abs(grad[r]) >= limit)) {
 		                continue;
 		            }
 
@@ -1109,10 +1110,12 @@ function keyReleased(e) {
 	key = undefined;
 }
 
+
 function clone(obj) {
-	var json = JSON.stringify(obj);
-	return JSON.parse(json);
+    var json = JSON.stringify(obj);
+    return JSON.parse(json);
 }
+
 
 function encodeData() {
 
